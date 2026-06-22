@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formation IA CNFPT - Programme & Sondage Interactif</title>
+    
+    <!-- Meta SEO -->
+    <meta name="description" content="Découvrez le programme de la formation IA du CNFPT du 28 septembre 2026 et participez au sondage interactif pour adapter la journée à vos besoins.">
+    <meta name="author" content="CNFPT IA Formateur">
+    
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Supabase JS Client CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+    <div class="app-container">
+        
+        <!-- =========================================================================
+           HEADER : LOGOS & NAVIGATION
+           ========================================================================= -->
+        <header class="app-header">
+            <div class="logos-container">
+                <img src="Logo_CNFPT.png" alt="Logo CNFPT" class="logo-item" id="cnfpt-logo">
+                <div class="logo-sep"></div>
+                <img src="logo.png" alt="Logo Formation" class="logo-item" id="formation-logo">
+            </div>
+            <nav class="nav-menu">
+                <a href="#programme" class="btn-nav active">Programme</a>
+                <a href="#sondage" class="btn-nav">Sondage</a>
+            </nav>
+        </header>
+
+        <!-- =========================================================================
+           VUE 1 : PRÉSENTATION DU PROGRAMME
+           ========================================================================= -->
+        <main id="view-programme" class="app-view active-view">
+            <section class="hero-section">
+                <div class="hero-badge">Session du 28 Septembre 2026</div>
+                <h1 class="hero-title">L'Intelligence Artificielle au Service de la Fonction Publique Territoriale</h1>
+                <p class="hero-subtitle">
+                    Une journée d'immersion complète, 100% adaptée à votre quotidien professionnel. Découvrez, comprenez et apprenez à maîtriser les outils de demain.
+                </p>
+                <a href="#sondage" class="btn-cta">Participer au sondage de rentrée <span>→</span></a>
+            </section>
+
+            <!-- Bannière Dynamique - Pédagogie Active -->
+            <div class="banner-dynamic">
+                <div class="banner-icon">⚡</div>
+                <div class="banner-content">
+                    <h3>Une formation active, rythmée et 100% pratique</h3>
+                    <p>
+                        Oubliez les cours magistraux théoriques ! Cette journée sera rythmée par une alternance continue d'exercices individuels et collectifs intégrés au sein de chaque module. Le contenu et les ateliers seront ajustés sur-mesure en fonction de vos profils et des résultats du sondage ci-dessus.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Grille du Programme -->
+            <h2 style="font-family: var(--font-heading); font-size: 2rem; margin-bottom: 2rem; text-align: center;">Le Programme de la Journée</h2>
+            
+            <div class="program-grid">
+                
+                <!-- Module 1 -->
+                <div class="program-card">
+                    <div class="card-num">Module 01</div>
+                    <h3 class="card-title">Fonctionnement de l'IA</h3>
+                    <p class="card-desc">Démystifier les coulisses de l'intelligence artificielle pour mieux en saisir le potentiel.</p>
+                    <ul class="card-topics">
+                        <li>Introduction aux réseaux de neurones</li>
+                        <li>Comment fonctionnent les modèles de langage (LLM)</li>
+                        <li>Les limites actuelles de la technologie</li>
+                    </ul>
+                </div>
+
+                <!-- Module 2 -->
+                <div class="program-card">
+                    <div class="card-num">Module 02</div>
+                    <h3 class="card-title">L'Art du Prompting</h3>
+                    <p class="card-desc">Apprendre à parler la langue des machines pour obtenir des réponses ultra-pertinentes.</p>
+                    <ul class="card-topics">
+                        <li>Les structures de prompts efficaces</li>
+                        <li>Donner un rôle, un contexte et des contraintes</li>
+                        <li>Méthodes avancées (Few-shot, Chain-of-thought)</li>
+                    </ul>
+                </div>
+
+                <!-- Module 3 -->
+                <div class="program-card">
+                    <div class="card-num">Module 03</div>
+                    <h3 class="card-title">Sécurité & Réglementation</h3>
+                    <p class="card-desc">Maîtriser le cadre légal et sécuritaire pour une utilisation sereine dans l'administration.</p>
+                    <ul class="card-topics">
+                        <li>RGPD et protection des données publiques</li>
+                        <li>Confidentialité des informations saisies</li>
+                        <li>Les bonnes pratiques de sécurité informatique</li>
+                    </ul>
+                </div>
+
+                <!-- Module 4 -->
+                <div class="program-card">
+                    <div class="card-num">Module 04</div>
+                    <h3 class="card-title">Fiabilité & Hallucinations</h3>
+                    <p class="card-desc">Développer son esprit critique face aux réponses générées par les modèles d'IA.</p>
+                    <ul class="card-topics">
+                        <li>Pourquoi et comment l'IA hallucine</li>
+                        <li>Méthodes de vérification et recoupement des faits</li>
+                        <li>Garder le contrôle humain sur les livrables</li>
+                    </ul>
+                </div>
+
+                <!-- Module 5 -->
+                <div class="program-card">
+                    <div class="card-num">Module 05</div>
+                    <h3 class="card-title">Panorama des Outils</h3>
+                    <p class="card-desc">Découverte pratique de la boîte à outils disponible pour automatiser vos tâches quotidiennes.</p>
+                    <ul class="card-topics">
+                        <li>ChatGPT, Claude, Gemini : comparatif</li>
+                        <li>Génération de visuels et de présentations</li>
+                        <li>Outils d'aide à la bureautique courante</li>
+                    </ul>
+                </div>
+
+            </div>
+
+            <!-- Call to Action de fin -->
+            <div class="program-cta">
+                <h3>Prêt à façonner votre formation ?</h3>
+                <p>Répondez en 2 minutes à notre sondage anonyme. Vos réponses permettront au formateur d'ajuster le contenu et de choisir des cas pratiques au plus près de votre métier.</p>
+                <a href="#sondage" class="btn-cta">Démarrer le sondage interactif</a>
+            </div>
+        </main>
+
+        <!-- =========================================================================
+           VUE 2 : SONDAGE INTERACTIF (WIZARD)
+           ========================================================================= -->
+        <section id="view-sondage" class="app-view">
+            
+            <!-- CONTENEUR DU FORMULAIRE ACTIF -->
+            <div id="survey-form-container" class="survey-wizard">
+                
+                <!-- Barre de progression -->
+                <div class="progress-bar-container">
+                    <div class="progress-bar-fill" id="progress-bar"></div>
+                    <span class="step-indicator" id="step-indicator-text">Étape 1 sur 5</span>
+                </div>
+
+                <!-- ÉTAPE 1 : PROFIL -->
+                <div id="step-1" class="survey-step active-step">
+                    <h2 class="step-title">Quel est votre profil au sein de la collectivité ?</h2>
+                    <p class="step-desc">Sélectionnez la catégorie qui correspond le mieux à votre fonction au quotidien.</p>
+                    
+                    <div class="profile-grid">
+                        <div class="profile-card" data-profile="Administratif / Secrétariat">
+                            <span class="profile-icon">📂</span>
+                            <span class="profile-name">Admin / Secrétariat</span>
+                        </div>
+                        <div class="profile-card" data-profile="Cadre / Manager / Élu">
+                            <span class="profile-icon">👥</span>
+                            <span class="profile-name">Cadre / Manager</span>
+                        </div>
+                        <div class="profile-card" data-profile="Technique / Système d'Information">
+                            <span class="profile-icon">💻</span>
+                            <span class="profile-name">Technique / Informatique</span>
+                        </div>
+                        <div class="profile-card" data-profile="Éducatif, Enseignement & Culture">
+                            <span class="profile-icon">🎨</span>
+                            <span class="profile-name">Culture / Éducation</span>
+                        </div>
+                        <div class="profile-card" data-profile="Autre Profil Territorial">
+                            <span class="profile-icon">🌍</span>
+                            <span class="profile-name">Autre Profil</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ÉTAPE 2 : CONTEXTES D'USAGE -->
+                <div id="step-2" class="survey-step">
+                    <h2 class="step-title">Dans quels contextes envisagez-vous d'utiliser l'IA ?</h2>
+                    <p class="step-desc">Sélectionnez tous les cas d'usage qui vous intéressent (plusieurs choix possibles).</p>
+                    
+                    <div class="context-grid">
+                        <div class="context-chip" data-context="Rédaction de courriers & rapports">Rédaction de courriers / rapports</div>
+                        <div class="context-chip" data-context="Synthèse de documents & notes">Synthèse de longs documents</div>
+                        <div class="context-chip" data-context="Recherche d'informations & veille">Recherche / Veille réglementaire</div>
+                        <div class="context-chip" data-context="Analyse de données & tableaux">Analyse de données / Chiffres</div>
+                        <div class="context-chip" data-context="Création de visuels & diaporamas">Création de présentations / visuels</div>
+                        <div class="context-chip" data-context="Aide au codage & automatisation">Aide au code / scripts / macros</div>
+                        <div class="context-chip" data-context="Brainstorming & idées de projets">Brainstorming / Génération d'idées</div>
+                    </div>
+                </div>
+
+                <!-- ÉTAPE 3 : NUAGE DE MOTS (ATTENTES) -->
+                <div id="step-3" class="survey-step">
+                    <h2 class="step-title">Qu'attendez-vous de cette formation ?</h2>
+                    <p class="step-desc">Ajoutez vos propres mots-clés ou cliquez sur les mots déjà proposés par les autres participants pour voter et les faire grandir !</p>
+                    
+                    <!-- Nuage interactif -->
+                    <div class="word-cloud-wrapper" id="cloud-attentes">
+                        <div class="word-cloud-empty">Chargement du nuage de mots...</div>
+                    </div>
+
+                    <!-- Champ d'ajout -->
+                    <div class="word-input-container">
+                        <input type="text" id="input-attente" class="input-modern" placeholder="Ex: Pratique, Gagner du temps, Sécurité..." maxlength="25">
+                        <button type="button" id="btn-add-attente" class="btn-add-word">Ajouter</button>
+                    </div>
+                </div>
+
+                <!-- ÉTAPE 4 : NUAGE DE MOTS (OUTILS) -->
+                <div id="step-4" class="survey-step">
+                    <h2 class="step-title">Quels outils d'IA utilisez-vous déjà ?</h2>
+                    <p class="step-desc">Indiquez les outils que vous avez déjà testés ou utilisés (ex: ChatGPT, Claude...). Votez également pour ceux de la liste.</p>
+                    
+                    <!-- Nuage interactif -->
+                    <div class="word-cloud-wrapper" id="cloud-outils">
+                        <div class="word-cloud-empty">Chargement du nuage de mots...</div>
+                    </div>
+
+                    <!-- Champ d'ajout -->
+                    <div class="word-input-container">
+                        <input type="text" id="input-outil" class="input-modern" placeholder="Ex: ChatGPT, Copilot, Midjourney..." maxlength="25">
+                        <button type="button" id="btn-add-outil" class="btn-add-word">Ajouter</button>
+                    </div>
+                </div>
+
+                <!-- ÉTAPE 5 : INTÉRÊT PROGRAMME -->
+                <div id="step-5" class="survey-step">
+                    <h2 class="step-title">Quels thèmes éveillent le plus votre curiosité ?</h2>
+                    <p class="step-desc">Évaluez votre intérêt pour chaque module du programme de 1 (faible) à 5 (très fort) étoiles.</p>
+                    
+                    <div class="interest-list">
+                        <!-- Thème 1 -->
+                        <div class="interest-row">
+                            <div class="interest-header">
+                                <span class="interest-label">Module 1 : Fonctionnement théorique des LLM / IA</span>
+                                <div class="interest-stars" data-topic="fonctionnement">
+                                    <span class="star" data-value="1">☆</span>
+                                    <span class="star" data-value="2">☆</span>
+                                    <span class="star" data-value="3">☆</span>
+                                    <span class="star" data-value="4">☆</span>
+                                    <span class="star" data-value="5">☆</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Thème 2 -->
+                        <div class="interest-row">
+                            <div class="interest-header">
+                                <span class="interest-label">Module 2 : L'art du Prompting & dialogue efficace</span>
+                                <div class="interest-stars" data-topic="prompt">
+                                    <span class="star" data-value="1">☆</span>
+                                    <span class="star" data-value="2">☆</span>
+                                    <span class="star" data-value="3">☆</span>
+                                    <span class="star" data-value="4">☆</span>
+                                    <span class="star" data-value="5">☆</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Thème 3 -->
+                        <div class="interest-row">
+                            <div class="interest-header">
+                                <span class="interest-label">Module 3 : Sécurité des données, RGPD & risques</span>
+                                <div class="interest-stars" data-topic="securite">
+                                    <span class="star" data-value="1">☆</span>
+                                    <span class="star" data-value="2">☆</span>
+                                    <span class="star" data-value="3">☆</span>
+                                    <span class="star" data-value="4">☆</span>
+                                    <span class="star" data-value="5">☆</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Thème 4 -->
+                        <div class="interest-row">
+                            <div class="interest-header">
+                                <span class="interest-label">Module 4 : Hallucinations, fiabilité & vérification des sources</span>
+                                <div class="interest-stars" data-topic="hallucinations">
+                                    <span class="star" data-value="1">☆</span>
+                                    <span class="star" data-value="2">☆</span>
+                                    <span class="star" data-value="3">☆</span>
+                                    <span class="star" data-value="4">☆</span>
+                                    <span class="star" data-value="5">☆</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Thème 5 -->
+                        <div class="interest-row">
+                            <div class="interest-header">
+                                <span class="interest-label">Module 5 : Découverte pratique de la boîte à outils IA</span>
+                                <div class="interest-stars" data-topic="outils">
+                                    <span class="star" data-value="1">☆</span>
+                                    <span class="star" data-value="2">☆</span>
+                                    <span class="star" data-value="3">☆</span>
+                                    <span class="star" data-value="4">☆</span>
+                                    <span class="star" data-value="5">☆</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pied de page du formulaire (Contrôles) -->
+                <div class="wizard-footer">
+                    <button type="button" id="btn-prev" class="btn-wizard" disabled>
+                        <span>←</span> Précédent
+                    </button>
+                    <button type="button" id="btn-next" class="btn-wizard btn-wizard-primary" disabled>
+                        Suivant <span>→</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- CONTENEUR DE SUCCÈS (Sondage déjà envoyé) -->
+            <div id="survey-success-container" class="survey-wizard survey-success" style="display: none;">
+                <span class="success-icon">🎉</span>
+                <h2 class="step-title">Merci pour vos réponses !</h2>
+                <p class="step-desc" style="margin-bottom: 2rem;">Votre participation a bien été enregistrée anonymement. Vos retours vont aider le formateur à affiner le programme de la journée.</p>
+                
+                <hr style="border: none; border-top: 1px solid var(--border-glass-light); margin: 2rem 0;">
+                
+                <!-- Vue consolidée des nuages en direct pour les participants -->
+                <h3 style="font-family:var(--font-heading); margin-bottom: 1rem; color: var(--color-accent);">Nuage en direct : Vos attentes</h3>
+                <div class="word-cloud-wrapper" id="result-cloud-attentes" style="min-height: 150px; margin-bottom: 2rem;"></div>
+                
+                <h3 style="font-family:var(--font-heading); margin-bottom: 1rem; color: var(--color-accent);">Nuage en direct : Les outils déjà utilisés</h3>
+                <div class="word-cloud-wrapper" id="result-cloud-outils" style="min-height: 150px;"></div>
+            </div>
+        </section>
+
+        <!-- =========================================================================
+           VUE 3 : TABLEAU DE BORD D'ADMINISTRATION
+           ========================================================================= -->
+        <section id="view-admin" class="app-view">
+            <div class="admin-header">
+                <div class="admin-title">
+                    <span>Espace Formateur</span> 
+                    <span class="admin-badge">ADMIN</span>
+                </div>
+                <div class="admin-actions">
+                    <button type="button" id="btn-export-csv" class="btn-admin btn-admin-success">
+                        📥 Exporter CSV (Excel)
+                    </button>
+                    <button type="button" id="btn-reset-db" class="btn-admin btn-admin-danger">
+                        ⚠️ Réinitialiser la DB
+                    </button>
+                    <button type="button" id="btn-logout" class="btn-admin" style="background: rgba(255,255,255,0.05); color: var(--text-light); border: 1px solid var(--border-glass-light);">
+                        Déconnexion
+                    </button>
+                </div>
+            </div>
+
+            <!-- Grille des statistiques condensées -->
+            <div class="admin-stats-grid">
+                <!-- Stat 1 : Participants -->
+                <div class="stat-card" style="display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
+                    <h3 class="stat-card-title">Réponses Reçues</h3>
+                    <div class="stat-value-big" id="stat-total-respondents">0</div>
+                    <p style="margin-top: 1rem; font-size: 0.85rem; color: var(--text-muted-light);">Participants au sondage anonyme</p>
+                </div>
+
+                <!-- Stat 2 : Répartition Profils -->
+                <div class="stat-card">
+                    <h3 class="stat-card-title">Profils des participants</h3>
+                    <div class="stat-bar-list" id="stat-profiles-list">
+                        <!-- Rempli dynamiquement -->
+                    </div>
+                </div>
+
+                <!-- Stat 3 : Contextes d'usage prioritaires -->
+                <div class="stat-card">
+                    <h3 class="stat-card-title">Usages recherchés</h3>
+                    <div class="stat-bar-list" id="stat-contexts-list">
+                        <!-- Rempli dynamiquement -->
+                    </div>
+                </div>
+
+                <!-- Stat 4 : Intérêt pour les Modules -->
+                <div class="stat-card">
+                    <h3 class="stat-card-title">Intérêt Moyen par Module</h3>
+                    <div class="stat-bar-list" id="stat-interests-list">
+                        <!-- Rempli dynamiquement -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section modération des nuages de mots -->
+            <h2 style="font-family: var(--font-heading); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                💬 Modération des Nuages de Mots
+            </h2>
+            <div class="admin-clouds-grid">
+                <div class="admin-cloud-card">
+                    <h3 style="font-family:var(--font-heading); margin-bottom: 1rem; color:var(--color-primary-light);">Attentes</h3>
+                    <div class="admin-cloud-words" id="admin-cloud-attentes"></div>
+                </div>
+                <div class="admin-cloud-card">
+                    <h3 style="font-family:var(--font-heading); margin-bottom: 1rem; color:var(--color-accent);">Outils IA</h3>
+                    <div class="admin-cloud-words" id="admin-cloud-outils"></div>
+                </div>
+            </div>
+
+            <!-- Table de données brutes -->
+            <h2 style="font-family: var(--font-heading); margin-bottom: 1.5rem;">📊 Réponses détaillées</h2>
+            <div class="admin-table-container">
+                <div class="table-responsive">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Profil</th>
+                                <th>Contextes visés</th>
+                                <th>Intérêts évalués</th>
+                                <th style="text-align: center; width: 80px;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-table-body">
+                            <!-- Rempli dynamiquement -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- =========================================================================
+           PIED DE PAGE : COPYRIGHT & CADENAS SECRET
+           ========================================================================= -->
+        <footer class="app-footer">
+            <div>
+                © 2026 - CNFPT - Formation IA Territoriale. Tous droits réservés.
+            </div>
+            <div>
+                <!-- Cadenas secret pour se connecter à l'administration -->
+                <button type="button" class="btn-padlock" id="btn-open-login" title="Espace Formateur">
+                    🔒
+                </button>
+            </div>
+        </footer>
+
+    </div>
+
+    <!-- =========================================================================
+       MODALE DE CONNEXION ADMIN
+       ========================================================================= -->
+    <div class="modal-overlay" id="modal-login">
+        <div class="modal-card">
+            <h3 class="modal-title">Authentification</h3>
+            <p class="modal-desc">Veuillez saisir le mot de passe de l'administrateur (admin@admin.fr) pour accéder au tableau de bord.</p>
+            
+            <div class="form-group">
+                <label for="input-admin-password">Mot de passe Supabase</label>
+                <input type="password" id="input-admin-password" class="input-modern" style="width: 100%; border-radius: 8px;" placeholder="••••••••">
+            </div>
+
+            <div class="modal-buttons">
+                <button type="button" id="btn-cancel-login" class="btn-modal btn-modal-cancel">Annuler</button>
+                <button type="button" id="btn-submit-login" class="btn-modal btn-modal-submit">Valider</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Conteneur des notifications (Toast) -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Script principal de l'application -->
+    <script src="app.js"></script>
+</body>
+</html>
