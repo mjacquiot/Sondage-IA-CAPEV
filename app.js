@@ -30,6 +30,48 @@ let chartContexts = null;
 let chartInterests = null;
 let realtimeChannel = null;
 
+// =========================================================================
+// WRAPPERS DE SÉCURITÉ & ROBUSTESSE
+// =========================================================================
+
+// Récupération sécurisée du localStorage (évite les erreurs SecurityError en navigation privée)
+function safeGetItem(key) {
+    try {
+        return localStorage.getItem(key);
+    } catch (e) {
+        console.warn("localStorage.getItem bloqué :", e);
+        return null;
+    }
+}
+
+// Enregistrement sécurisé dans le localStorage
+function safeSetItem(key, value) {
+    try {
+        localStorage.setItem(key, value);
+    } catch (e) {
+        console.warn("localStorage.setItem bloqué :", e);
+    }
+}
+
+// Suppression sécurisée du localStorage
+function safeRemoveItem(key) {
+    try {
+        localStorage.removeItem(key);
+    } catch (e) {
+        console.warn("localStorage.removeItem bloqué :", e);
+    }
+}
+
+// Liaison d'écouteur d'événement tolérante aux pannes
+function safeAddListener(id, event, callback) {
+    const el = document.getElementById(id);
+    if (el) {
+        el.addEventListener(event, callback);
+    } else {
+        console.warn(`Élément avec l'ID '${id}' introuvable. Écouteur ignoré.`);
+    }
+}
+
 // Initialisation globale robuste de l'application
 function initApp() {
     try {
@@ -41,15 +83,27 @@ function initApp() {
         console.error("Supabase init error:", e);
     }
 
-    // Gestion du routage SPA
-    window.addEventListener('hashchange', handleRouting);
-    handleRouting();
+    try {
+        // Gestion du routage SPA
+        window.addEventListener('hashchange', handleRouting);
+        handleRouting();
+    } catch (e) {
+        console.error("Initial routing error:", e);
+    }
 
-    // Configuration des écouteurs d'événements UI
-    setupEventListeners();
+    try {
+        // Configuration des écouteurs d'événements UI
+        setupEventListeners();
+    } catch (e) {
+        console.error("setupEventListeners error:", e);
+    }
     
-    // Vérification de session admin existante
-    checkAdminSession();
+    try {
+        // Vérification de session admin existante
+        checkAdminSession();
+    } catch (e) {
+        console.error("checkAdminSession error:", e);
+    }
 }
 
 // Vérification de l'état de chargement du document pour parer aux chargements asynchrones/différés
@@ -85,7 +139,7 @@ function initRealtime() {
                 }
                 
                 // Si le sondage est complété, recharger les nuages récapitulatifs
-                if (localStorage.getItem('survey_completed') === 'true' && window.location.hash === '#sondage') {
+                if (safeGetItem('survey_completed') === 'true' && window.location.hash === '#sondage') {
                     loadWordCloud('attentes', true).then(() => renderReadOnlyCloud('attentes'));
                     loadWordCloud('outils', true).then(() => renderReadOnlyCloud('outils'));
                 }
@@ -113,46 +167,55 @@ function initRealtime() {
 // =========================================================================
 
 async function handleRouting() {
-    const hash = window.location.hash || '#programme';
-    const views = document.querySelectorAll('.app-view');
-    const navButtons = document.querySelectorAll('.btn-nav');
-    
-    // Nettoyer l'intervalle de rafraîchissement précédent
-    if (refreshInterval) {
-        clearInterval(refreshInterval);
-        refreshInterval = null;
-    }
-
-    // Cacher toutes les vues
-    views.forEach(v => v.classList.remove('active-view'));
-    navButtons.forEach(b => b.classList.remove('active'));
-
-    // Activer la vue correspondante
-    if (hash === '#programme') {
-        document.getElementById('view-programme').classList.add('active-view');
-        document.querySelector('[href="#programme"]')?.classList.add('active');
-    } 
-    else if (hash === '#sondage') {
-        // Si le sondage est déjà complété, on redirige vers l'écran de remerciement/résultat
-        if (localStorage.getItem('survey_completed') === 'true') {
-            document.getElementById('view-sondage').classList.add('active-view');
-            showSurveySuccessView();
-        } else {
-            document.getElementById('view-sondage').classList.add('active-view');
-            resetSurveyWizard();
+    try {
+        const hash = window.location.hash || '#programme';
+        const views = document.querySelectorAll('.app-view');
+        const navButtons = document.querySelectorAll('.btn-nav');
+        
+        // Nettoyer l'intervalle de rafraîchissement précédent
+        if (refreshInterval) {
+            clearInterval(refreshInterval);
+            refreshInterval = null;
         }
-        document.querySelector('[href="#sondage"]')?.classList.add('active');
-    } 
-    else if (hash === '#admin') {
-        const session = await getSession();
-        if (session) {
-            document.getElementById('view-admin').classList.add('active-view');
-            loadAdminDashboard();
+
+        // Cacher toutes les vues
+        views.forEach(v => v.classList.remove('active-view'));
+        navButtons.forEach(b => b.classList.remove('active'));
+
+        // Activer la vue correspondante
+        const targetViewId = 'view-' + hash.substring(1);
+        const targetView = document.getElementById(targetViewId);
+        if (targetView) {
+            targetView.classList.add('active-view');
         } else {
-            // Si pas connecté, rediriger vers le programme et ouvrir la modale de login
-            window.location.hash = '#programme';
-            openLoginModal();
+            console.warn(`View element with ID '${targetViewId}' not found.`);
         }
+
+        const navBtn = document.querySelector(`[href="${hash}"]`);
+        if (navBtn) {
+            navBtn.classList.add('active');
+        }
+
+        if (hash === '#sondage') {
+            // Si le sondage est déjà complété, on redirige vers l'écran de remerciement/résultat
+            if (safeGetItem('survey_completed') === 'true') {
+                showSurveySuccessView();
+            } else {
+                resetSurveyWizard();
+            }
+        } 
+        else if (hash === '#admin') {
+            const session = await getSession();
+            if (session) {
+                loadAdminDashboard();
+            } else {
+                // Si pas connecté, rediriger vers le programme et ouvrir la modale de login
+                window.location.hash = '#programme';
+                openLoginModal();
+            }
+        }
+    } catch (e) {
+        console.error("Routing error:", e);
     }
 }
 
@@ -162,8 +225,8 @@ async function handleRouting() {
 
 function setupEventListeners() {
     // Boutons de navigation du sondage
-    document.getElementById('btn-prev').addEventListener('click', prevStep);
-    document.getElementById('btn-next').addEventListener('click', nextStep);
+    safeAddListener('btn-prev', 'click', prevStep);
+    safeAddListener('btn-next', 'click', nextStep);
 
     // Écouteurs pour l'étape 1 : Profils
     document.querySelectorAll('.profile-card').forEach(card => {
@@ -171,7 +234,8 @@ function setupEventListeners() {
             document.querySelectorAll('.profile-card').forEach(c => c.classList.remove('selected'));
             card.classList.add('selected');
             selectedProfile = card.dataset.profile;
-            document.getElementById('btn-next').disabled = false;
+            const btnNext = document.getElementById('btn-next');
+            if (btnNext) btnNext.disabled = false;
         });
     });
 
@@ -185,25 +249,31 @@ function setupEventListeners() {
             } else {
                 selectedContexts = selectedContexts.filter(c => c !== context);
             }
-            // Au moins 1 contexte requis pour avancer
-            document.getElementById('btn-next').disabled = selectedContexts.length === 0;
+            const btnNext = document.getElementById('btn-next');
+            if (btnNext) btnNext.disabled = selectedContexts.length === 0;
         });
     });
 
     // Écouteurs pour les nuages de mots (Ajout par input)
-    document.getElementById('btn-add-attente').addEventListener('click', () => {
+    safeAddListener('btn-add-attente', 'click', () => {
         submitNewWord('attentes', 'input-attente');
     });
-    document.getElementById('input-attente').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') submitNewWord('attentes', 'input-attente');
-    });
+    const inputAttente = document.getElementById('input-attente');
+    if (inputAttente) {
+        inputAttente.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') submitNewWord('attentes', 'input-attente');
+        });
+    }
 
-    document.getElementById('btn-add-outil').addEventListener('click', () => {
+    safeAddListener('btn-add-outil', 'click', () => {
         submitNewWord('outils', 'input-outil');
     });
-    document.getElementById('input-outil').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') submitNewWord('outils', 'input-outil');
-    });
+    const inputOutil = document.getElementById('input-outil');
+    if (inputOutil) {
+        inputOutil.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') submitNewWord('outils', 'input-outil');
+        });
+    }
 
     // Écouteurs pour l'étape 5 : Évaluation des intérêts (Étoiles)
     document.querySelectorAll('.interest-stars').forEach(container => {
@@ -233,19 +303,22 @@ function setupEventListeners() {
     });
 
     // Bouton cadenas discret
-    document.getElementById('btn-open-login').addEventListener('click', openLoginModal);
+    safeAddListener('btn-open-login', 'click', openLoginModal);
 
     // Modale de connexion Admin
-    document.getElementById('btn-cancel-login').addEventListener('click', closeLoginModal);
-    document.getElementById('btn-submit-login').addEventListener('click', submitLogin);
-    document.getElementById('input-admin-password').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') submitLogin();
-    });
+    safeAddListener('btn-cancel-login', 'click', closeLoginModal);
+    safeAddListener('btn-submit-login', 'click', submitLogin);
+    const inputPassword = document.getElementById('input-admin-password');
+    if (inputPassword) {
+        inputPassword.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') submitLogin();
+        });
+    }
 
     // Actions d'administration
-    document.getElementById('btn-logout').addEventListener('click', handleLogout);
-    document.getElementById('btn-export-csv').addEventListener('click', exportDataToCSV);
-    document.getElementById('btn-reset-db').addEventListener('click', confirmResetDatabase);
+    safeAddListener('btn-logout', 'click', handleLogout);
+    safeAddListener('btn-export-csv', 'click', exportDataToCSV);
+    safeAddListener('btn-reset-db', 'click', confirmResetDatabase);
 }
 
 // =========================================================================
@@ -384,7 +457,7 @@ function renderWordCloud(questionId) {
         
         // Vérifier si l'utilisateur a déjà voté pour ce mot sur cet appareil
         const storageKey = `voted_${questionId}_${item.word.toLowerCase()}`;
-        const hasVoted = localStorage.getItem(storageKey) === 'true';
+        const hasVoted = safeGetItem(storageKey) === 'true';
         
         if (hasVoted) {
             bubble.classList.add('voted');
@@ -446,7 +519,7 @@ async function submitNewWord(questionId, inputId) {
     if (existing) {
         // Si existe déjà, on vote automatiquement pour
         const storageKey = `voted_${questionId}_${existing.word.toLowerCase()}`;
-        if (localStorage.getItem(storageKey) === 'true') {
+        if (safeGetItem(storageKey) === 'true') {
             showToast(`Vous avez déjà voté pour "${existing.word}"`, "info");
         } else {
             voteForWord(questionId, existing.word, existing.votes);
@@ -464,7 +537,7 @@ async function submitNewWord(questionId, inputId) {
         if (error) throw error;
 
         // Marquer comme voté localement
-        localStorage.setItem(`voted_${questionId}_${wordLower}`, 'true');
+        safeSetItem(`voted_${questionId}_${wordLower}`, 'true');
         
         input.value = '';
         showToast(`"${word}" a été ajouté !`, "success");
@@ -482,7 +555,7 @@ async function voteForWord(questionId, word, currentVotes) {
     const wordLower = word.toLowerCase();
     const storageKey = `voted_${questionId}_${wordLower}`;
     
-    if (localStorage.getItem(storageKey) === 'true') return;
+    if (safeGetItem(storageKey) === 'true') return;
 
     try {
         const { error } = await supabase
@@ -494,7 +567,7 @@ async function voteForWord(questionId, word, currentVotes) {
         if (error) throw error;
 
         // Enregistrer le vote localement
-        localStorage.setItem(storageKey, 'true');
+        safeSetItem(storageKey, 'true');
         showToast("Vote enregistré !", "success");
 
         // Recharger immédiatement le nuage
@@ -532,7 +605,7 @@ async function submitSurvey() {
         if (error) throw error;
 
         // Enregistrer la complétion du sondage dans le localStorage
-        localStorage.setItem('survey_completed', 'true');
+        safeSetItem('survey_completed', 'true');
         
         // Nettoyer les intervalles
         if (refreshInterval) {
@@ -603,12 +676,16 @@ function renderReadOnlyCloud(questionId) {
 
 // Permettre à l'utilisateur de refaire le sondage (Utile pour le formateur ou tests)
 function debugResetSurvey() {
-    localStorage.removeItem('survey_completed');
+    safeRemoveItem('survey_completed');
     // Nettoyer aussi les votes pour pouvoir retester
-    for (let key in localStorage) {
-        if (key.startsWith('voted_')) {
-            localStorage.removeItem(key);
+    try {
+        for (let key in localStorage) {
+            if (key.startsWith('voted_')) {
+                safeRemoveItem(key);
+            }
         }
+    } catch (e) {
+        console.warn("Erreur lors de la réinitialisation de localStorage :", e);
     }
     window.location.hash = '#programme';
     setTimeout(() => {
@@ -639,7 +716,7 @@ async function checkAdminSession() {
     if (session) {
         document.getElementById('btn-open-login').style.color = 'var(--color-accent)';
     } else {
-        document.getElementById('btn-open-login').style.color = 'rgba(255, 255, 255, 0.15)';
+        document.getElementById('btn-open-login').style.color = 'rgba(15, 23, 42, 0.2)';
     }
 }
 
@@ -648,7 +725,7 @@ async function getSession() {
     try {
         const { data, error } = await supabase.auth.getSession();
         if (error) return null;
-        return data?.session;
+        return data ? data.session : null;
     } catch (e) {
         return null;
     }
@@ -770,7 +847,7 @@ function renderStats() {
                     '#f59e0b'  // Amber
                 ],
                 borderWidth: 1,
-                borderColor: '#0f172a'
+                borderColor: '#ffffff'
             }]
         },
         options: {
@@ -780,7 +857,7 @@ function renderStats() {
                 legend: {
                     position: 'right',
                     labels: {
-                        color: '#94a3b8',
+                        color: '#475569',
                         font: { family: 'Inter', size: 10 }
                     }
                 }
@@ -822,12 +899,12 @@ function renderStats() {
             },
             scales: {
                 x: {
-                    grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                    ticks: { color: '#94a3b8', stepSize: 1 }
+                    grid: { color: 'rgba(15, 23, 42, 0.05)' },
+                    ticks: { color: '#475569', stepSize: 1 }
                 },
                 y: {
                     grid: { display: false },
-                    ticks: { color: '#94a3b8', font: { size: 10 } }
+                    ticks: { color: '#475569', font: { size: 10 } }
                 }
             }
         }
@@ -866,8 +943,8 @@ function renderStats() {
             datasets: [{
                 label: 'Intérêt Moyen',
                 data: radarData,
-                backgroundColor: 'rgba(147, 51, 234, 0.2)',
-                borderColor: '#c084fc',
+                backgroundColor: 'rgba(147, 51, 234, 0.1)',
+                borderColor: '#9333ea',
                 pointBackgroundColor: '#9333ea',
                 pointBorderColor: '#fff',
                 borderWidth: 2
@@ -881,14 +958,14 @@ function renderStats() {
             },
             scales: {
                 r: {
-                    angleLines: { color: 'rgba(255, 255, 255, 0.08)' },
-                    grid: { color: 'rgba(255, 255, 255, 0.08)' },
+                    angleLines: { color: 'rgba(15, 23, 42, 0.08)' },
+                    grid: { color: 'rgba(15, 23, 42, 0.08)' },
                     pointLabels: {
-                        color: '#94a3b8',
+                        color: '#475569',
                         font: { size: 9, family: 'Inter' }
                     },
                     ticks: {
-                        color: '#94a3b8',
+                        color: '#475569',
                         backdropColor: 'transparent',
                         stepSize: 1,
                         min: 0,
@@ -1081,11 +1158,12 @@ function exportDataToCSV() {
         const profile = r.profile ? `"${r.profile.replace(/"/g, '""')}"` : "";
         const contexts = r.usage_contexts ? `"${r.usage_contexts.join(', ').replace(/"/g, '""')}"` : "";
         
-        const f = r.interests?.fonctionnement || 0;
-        const p = r.interests?.prompt || 0;
-        const s = r.interests?.securite || 0;
-        const h = r.interests?.hallucinations || 0;
-        const o = r.interests?.outils || 0;
+        const interestsObj = r.interests || {};
+        const f = interestsObj.fonctionnement || 0;
+        const p = interestsObj.prompt || 0;
+        const s = interestsObj.securite || 0;
+        const h = interestsObj.hallucinations || 0;
+        const o = interestsObj.outils || 0;
 
         csvContent += `${dateStr};${profile};${contexts};${f};${p};${s};${h};${o}\n`;
     });

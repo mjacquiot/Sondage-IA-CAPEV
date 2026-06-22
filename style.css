@@ -10,23 +10,23 @@
 
     /* Palette CNFPT & IA Moderne */
     --color-cnfpt-blue: #0f2042;
-    --color-cnfpt-blue-light: #1e3a8a;
+    --color-cnfpt-blue-light: #1a365d;
     --color-primary: #4f46e5;      /* Indigo */
-    --color-primary-light: #818cf8;
-    --color-accent: #06b6d4;       /* Cyan */
+    --color-primary-light: #6366f1;
+    --color-accent: #0891b2;       /* Cyan */
     --color-purple: #9333ea;       /* Violet */
-    --color-purple-light: #c084fc;
+    --color-purple-light: #a855f7;
     
-    /* Neutres */
-    --bg-dark: #070b19;
-    --bg-card-dark: rgba(15, 23, 42, 0.6);
-    --bg-card-light: rgba(255, 255, 255, 0.75);
-    --text-light: #f8fafc;
-    --text-muted-light: #94a3b8;
+    /* Neutres - Thème Clair Moderne */
+    --bg-dark: #f8fafc;            /* Fond clair blanc/bleuté */
+    --bg-card-dark: rgba(255, 255, 255, 0.7); /* Cartes de verre blanches transparentes */
+    --bg-card-light: rgba(255, 255, 255, 0.95);
+    --text-light: #0f172a;         /* Texte principal foncé ardoise */
+    --text-muted-light: #475569;   /* Texte secondaire foncé */
     --text-dark: #0f172a;
-    --text-muted-dark: #475569;
-    --border-glass-light: rgba(255, 255, 255, 0.1);
-    --border-glass-dark: rgba(15, 23, 42, 0.08);
+    --text-muted-dark: #64748b;
+    --border-glass-light: rgba(15, 23, 42, 0.08); /* Bordures sombres fines et discrètes */
+    --border-glass-dark: rgba(15, 23, 42, 0.12);
 
     /* Graphiques/Stats */
     --color-success: #10b981;
@@ -36,8 +36,8 @@
     /* Transitions & Ombres */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-fast: all 0.15s ease;
-    --shadow-premium: 0 10px 30px -10px rgba(0, 0, 0, 0.3);
-    --shadow-glow: 0 0 20px rgba(6, 182, 212, 0.15);
+    --shadow-premium: 0 10px 30px -10px rgba(15, 23, 42, 0.06);
+    --shadow-glow: 0 0 20px rgba(79, 70, 229, 0.06);
 }
 
 /* =========================================================================
@@ -62,8 +62,8 @@ body {
     overflow-x: hidden;
     line-height: 1.6;
     background-image: 
-        radial-gradient(circle at 10% 20%, rgba(79, 70, 229, 0.15) 0%, transparent 40%),
-        radial-gradient(circle at 90% 80%, rgba(6, 182, 212, 0.1) 0%, transparent 45%);
+        radial-gradient(circle at 10% 20%, rgba(79, 70, 229, 0.05) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(6, 182, 212, 0.04) 0%, transparent 45%);
     background-attachment: fixed;
 }
 
@@ -72,7 +72,7 @@ body {
     width: 8px;
 }
 ::-webkit-scrollbar-track {
-    background: rgba(15, 23, 42, 0.5);
+    background: rgba(15, 23, 42, 0.03);
 }
 ::-webkit-scrollbar-thumb {
     background: var(--color-primary-light);
@@ -151,6 +151,7 @@ body {
     border-color: transparent;
     box-shadow: var(--shadow-glow);
     transform: translateY(-2px);
+    color: white;
 }
 
 /* =========================================================================
@@ -201,7 +202,7 @@ body {
     font-weight: 800;
     line-height: 1.2;
     margin-bottom: 1.5rem;
-    background: linear-gradient(to right, #ffffff, #a5b4fc, #818cf8);
+    background: linear-gradient(to right, var(--color-cnfpt-blue), var(--color-primary), var(--color-purple));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
@@ -327,7 +328,7 @@ body {
     position: relative;
     padding-left: 1.5rem;
     margin-bottom: 0.6rem;
-    color: rgba(255, 255, 255, 0.85);
+    color: var(--text-muted-light);
 }
 
 .card-topics li::before {
@@ -340,7 +341,7 @@ body {
 /* Call to Action Programme */
 .program-cta {
     text-align: center;
-    background: rgba(15, 23, 42, 0.4);
+    background: var(--bg-card-dark);
     border: 1px solid var(--border-glass-light);
     border-radius: 16px;
     padding: 3rem 2rem;
@@ -361,7 +362,7 @@ body {
 .btn-cta {
     background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-purple) 100%);
     border: none;
-    color: var(--text-light);
+    color: white;
     padding: 1rem 2.5rem;
     border-radius: 50px;
     font-family: var(--font-heading);
@@ -542,7 +543,7 @@ body {
 
 /* Nuages de Mots (Step 3 et 4) */
 .word-cloud-wrapper {
-    background: rgba(0, 0, 0, 0.2);
+    background: rgba(15, 23, 42, 0.02);
     border: 1px solid var(--border-glass-light);
     border-radius: 16px;
     padding: 2rem;
@@ -571,13 +572,14 @@ body {
     align-items: center;
     gap: 0.4rem;
     padding: 0.4em 0.8em;
-    background: rgba(255, 255, 255, 0.04);
+    background: rgba(255, 255, 255, 0.9);
     border: 1px solid var(--border-glass-light);
     border-radius: 50px;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     white-space: nowrap;
     user-select: none;
+    box-shadow: 0 2px 5px rgba(15, 23, 42, 0.03);
 }
 
 .word-bubble:hover {
@@ -603,7 +605,7 @@ body {
 
 .word-count {
     font-size: 0.7em;
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(15, 23, 42, 0.06);
     padding: 0.2em 0.5em;
     border-radius: 20px;
     font-weight: 700;
@@ -625,7 +627,7 @@ body {
 
 .input-modern {
     flex: 1;
-    background: rgba(0, 0, 0, 0.2);
+    background: rgba(15, 23, 42, 0.03);
     border: 1px solid var(--border-glass-light);
     padding: 0.8rem 1.2rem;
     border-radius: 30px;
@@ -696,7 +698,7 @@ body {
 
 .star {
     font-size: 1.5rem;
-    color: rgba(255, 255, 255, 0.15);
+    color: rgba(15, 23, 42, 0.15);
     cursor: pointer;
     transition: var(--transition-fast);
 }
@@ -933,7 +935,7 @@ body {
 
 .admin-cloud-words {
     min-height: 180px;
-    background: rgba(0, 0, 0, 0.15);
+    background: rgba(15, 23, 42, 0.03);
     border-radius: 12px;
     padding: 1rem;
     display: flex;
@@ -948,10 +950,11 @@ body {
     align-items: center;
     gap: 0.4rem;
     padding: 0.3rem 0.6rem;
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.85);
     border: 1px solid var(--border-glass-light);
     border-radius: 30px;
     font-size: 0.85rem;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.02);
 }
 
 .btn-delete-word {
@@ -1002,18 +1005,18 @@ body {
 }
 
 .admin-table th {
-    background: rgba(15, 23, 42, 0.8);
+    background: rgba(15, 23, 42, 0.04);
     padding: 1rem 1.5rem;
     font-family: var(--font-heading);
     font-weight: 600;
-    color: var(--color-primary-light);
+    color: var(--text-light);
     border-bottom: 1px solid var(--border-glass-light);
 }
 
 .admin-table td {
     padding: 1rem 1.5rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-    color: rgba(255, 255, 255, 0.85);
+    border-bottom: 1px solid var(--border-glass-light);
+    color: var(--text-light);
 }
 
 .admin-table tbody tr:hover {
@@ -1040,7 +1043,7 @@ body {
 .btn-padlock {
     background: transparent;
     border: none;
-    color: rgba(255, 255, 255, 0.15);
+    color: rgba(15, 23, 42, 0.2);
     font-size: 1.1rem;
     cursor: pointer;
     transition: var(--transition-smooth);
@@ -1080,13 +1083,13 @@ body {
 }
 
 .modal-card {
-    background: #0f172a;
+    background: #ffffff;
     border: 1px solid var(--border-glass-light);
     border-radius: 20px;
     padding: 2.5rem;
     width: 90%;
     max-width: 420px;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 20px 50px rgba(15, 23, 42, 0.1);
     transform: scale(0.9);
     transition: var(--transition-smooth);
 }
@@ -1277,7 +1280,7 @@ body {
     font-weight: 800;
     line-height: 1.2;
     margin-bottom: 1.2rem;
-    background: linear-gradient(to right, #ffffff, #a5b4fc, #818cf8);
+    background: linear-gradient(to right, var(--color-cnfpt-blue), var(--color-primary), var(--color-purple));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
@@ -1329,7 +1332,7 @@ body {
 .btn-cta-compact {
     background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-purple) 100%);
     border: none;
-    color: var(--text-light);
+    color: white;
     padding: 0.8rem 2.2rem;
     border-radius: 50px;
     font-family: var(--font-heading);
@@ -1370,7 +1373,7 @@ body {
 }
 
 .module-card-compact {
-    background: rgba(15, 23, 42, 0.4);
+    background: var(--bg-card-dark);
     border: 1px solid var(--border-glass-light);
     border-radius: 12px;
     padding: 0.8rem 1.2rem;
@@ -1433,6 +1436,20 @@ body {
     .hero-title-compact {
         font-size: 2rem;
     }
+}
+
+.badge-exercise {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--color-purple);
+    background: rgba(147, 51, 234, 0.07);
+    border: 1px solid rgba(147, 51, 234, 0.15);
+    padding: 0.1rem 0.5rem;
+    border-radius: 20px;
+    margin-left: 0.5rem;
+    vertical-align: middle;
+    letter-spacing: 0.2px;
 }
 
 
