@@ -37,6 +37,34 @@ window.addEventListener('unhandledrejection', function(e) {
     document.body.appendChild(errorDiv);
 });
 
+// Fonction pour rapporter les erreurs capturées
+function reportError(source, err) {
+    console.error(source + " error:", err);
+    
+    const showBanner = () => {
+        const errorDiv = document.createElement('div');
+        errorDiv.style.position = 'fixed';
+        errorDiv.style.top = '0';
+        errorDiv.style.left = '0';
+        errorDiv.style.width = '100%';
+        errorDiv.style.background = '#ef4444';
+        errorDiv.style.color = '#ffffff';
+        errorDiv.style.padding = '1rem';
+        errorDiv.style.zIndex = '99999';
+        errorDiv.style.fontSize = '0.9rem';
+        errorDiv.style.fontFamily = 'monospace';
+        errorDiv.style.whiteSpace = 'pre-wrap';
+        errorDiv.innerHTML = '<strong>[Erreur Capturée: ' + source + ']</strong> ' + (err.message || err) + (err.stack ? '<br><small style="font-size:0.75rem">' + err.stack.split('\n')[0] + '</small>' : '');
+        document.body.appendChild(errorDiv);
+    };
+
+    if (document.body) {
+        showBanner();
+    } else {
+        window.addEventListener('DOMContentLoaded', showBanner);
+    }
+}
+
 // Polyfill pour NodeList.prototype.forEach (compatibilité anciens navigateurs)
 if (window.NodeList && !NodeList.prototype.forEach) {
     NodeList.prototype.forEach = Array.prototype.forEach;
@@ -120,7 +148,7 @@ function initApp() {
         initRealtime();
     } catch (e) {
         showToast("Erreur d'initialisation de Supabase. Vérifiez votre connexion.", "error");
-        console.error("Supabase init error:", e);
+        reportError("Supabase init", e);
     }
 
     try {
@@ -128,21 +156,21 @@ function initApp() {
         window.addEventListener('hashchange', handleRouting);
         handleRouting();
     } catch (e) {
-        console.error("Initial routing error:", e);
+        reportError("Initial routing", e);
     }
 
     try {
         // Configuration des écouteurs d'événements UI
         setupEventListeners();
     } catch (e) {
-        console.error("setupEventListeners error:", e);
+        reportError("setupEventListeners", e);
     }
     
     try {
         // Vérification de session admin existante
         checkAdminSession();
     } catch (e) {
-        console.error("checkAdminSession error:", e);
+        reportError("checkAdminSession", e);
     }
 }
 
@@ -255,7 +283,7 @@ async function handleRouting() {
             }
         }
     } catch (e) {
-        console.error("Routing error:", e);
+        reportError("Routing", e);
     }
 }
 
