@@ -142,6 +142,7 @@ function safeAddListener(id, event, callback) {
 
 // Initialisation globale robuste de l'application
 function initApp() {
+    alert("Script app.js exécuté !");
     try {
         // Initialisation du client Supabase
         supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
