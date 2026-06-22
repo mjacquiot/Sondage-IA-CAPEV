@@ -173,6 +173,7 @@ function initApp() {
     } catch (e) {
         reportError("checkAdminSession", e);
     }
+    window.appInitialized = true;
 }
 
 // Vérification de l'état de chargement du document pour parer aux chargements asynchrones/différés

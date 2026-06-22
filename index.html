@@ -5,12 +5,57 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Formation IA CNFPT - Programme & Sondage Interactif</title>
     
+    <!-- Visual Remote Debugger (Registered immediately before any other script loads) -->
+    <script>
+        window.addEventListener('error', function(e) {
+            const errorDiv = document.createElement('div');
+            errorDiv.style.position = 'fixed';
+            errorDiv.style.top = '0';
+            errorDiv.style.left = '0';
+            errorDiv.style.width = '100%';
+            errorDiv.style.background = '#ef4444';
+            errorDiv.style.color = '#ffffff';
+            errorDiv.style.padding = '1rem';
+            errorDiv.style.zIndex = '999999';
+            errorDiv.style.fontSize = '0.9rem';
+            errorDiv.style.fontFamily = 'monospace';
+            errorDiv.style.whiteSpace = 'pre-wrap';
+            errorDiv.innerHTML = '<strong>[Erreur HTML/JS]</strong> ' + e.message + ' (fichier: ' + (e.filename ? e.filename.split('/').pop() : 'inconnu') + ', ligne: ' + e.lineno + ')';
+            if (document.body) {
+                document.body.appendChild(errorDiv);
+            } else {
+                window.addEventListener('DOMContentLoaded', function() { document.body.appendChild(errorDiv); });
+            }
+        });
+
+        window.addEventListener('unhandledrejection', function(e) {
+            const errorDiv = document.createElement('div');
+            errorDiv.style.position = 'fixed';
+            errorDiv.style.top = '0';
+            errorDiv.style.left = '0';
+            errorDiv.style.width = '100%';
+            errorDiv.style.background = '#f59e0b';
+            errorDiv.style.color = '#ffffff';
+            errorDiv.style.padding = '1rem';
+            errorDiv.style.zIndex = '999999';
+            errorDiv.style.fontSize = '0.9rem';
+            errorDiv.style.fontFamily = 'monospace';
+            errorDiv.style.whiteSpace = 'pre-wrap';
+            errorDiv.innerHTML = '<strong>[Erreur Promesse]</strong> ' + (e.reason ? (e.reason.message || e.reason) : 'Promesse rejetée');
+            if (document.body) {
+                document.body.appendChild(errorDiv);
+            } else {
+                window.addEventListener('DOMContentLoaded', function() { document.body.appendChild(errorDiv); });
+            }
+        });
+    </script>
+    
     <!-- Meta SEO -->
     <meta name="description" content="Découvrez le programme de la formation IA du CNFPT du 28 septembre 2026 et participez au sondage interactif pour adapter la journée à vos besoins.">
     <meta name="author" content="CNFPT IA Formateur">
     
     <!-- Stylesheet -->
-    <link rel="stylesheet" href="style.css?v=1.0.6">
+    <link rel="stylesheet" href="style.css?v=1.0.7">
     
     <!-- Supabase JS Client CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
@@ -454,6 +499,36 @@
     <div class="toast-container" id="toast-container"></div>
 
     <!-- Script principal de l'application -->
-    <script src="app.js?v=1.0.6" defer></script>
+    <script src="app.js?v=1.0.7" defer></script>
+    
+    <!-- Détection de chargement de l'application (Robustesse & Anti-Cache) -->
+    <script>
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                if (!window.appInitialized) {
+                    const warningDiv = document.createElement('div');
+                    warningDiv.style.position = 'fixed';
+                    warningDiv.style.top = '0';
+                    warningDiv.style.left = '0';
+                    warningDiv.style.width = '100%';
+                    warningDiv.style.background = '#dc2626';
+                    warningDiv.style.color = '#ffffff';
+                    warningDiv.style.padding = '1.2rem';
+                    warningDiv.style.zIndex = '999999';
+                    warningDiv.style.fontSize = '0.95rem';
+                    warningDiv.style.fontWeight = 'bold';
+                    warningDiv.style.textAlign = 'center';
+                    warningDiv.style.boxShadow = '0 4px 15px rgba(0,0,0,0.3)';
+                    warningDiv.style.fontFamily = 'system-ui, -apple-system, sans-serif';
+                    warningDiv.innerHTML = '⚠️ Le script de l\'application (app.js) n\'a pas pu démarrer. <br>' +
+                        '<span style="font-weight:normal;font-size:0.85rem;display:inline-block;margin-top:0.4rem;text-align:left;">' +
+                        '• Votre navigateur utilise probablement une version obsolète en cache. <strong>Appuyez sur Ctrl + F5</strong> (ou Cmd + Shift + R sur Mac) pour forcer le rechargement.<br>' +
+                        '• Si le problème persiste, il se peut que le réseau de votre collectivité bloque les connexions nécessaires.' +
+                        '</span>';
+                    document.body.appendChild(warningDiv);
+                }
+            }, 500);
+        });
+    </script>
 </body>
 </html>
