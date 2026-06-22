@@ -2,6 +2,11 @@
 // LOGIQUE APPLICATIVE - FORMATION IA CNFPT
 // =========================================================================
 
+// Polyfill pour NodeList.prototype.forEach (compatibilité anciens navigateurs)
+if (window.NodeList && !NodeList.prototype.forEach) {
+    NodeList.prototype.forEach = Array.prototype.forEach;
+}
+
 // Configuration Supabase
 const supabaseUrl = 'https://hkqawuxumimkainegqln.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhrcWF3dXh1bWlta2FpbmVncWxuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIxMzAxNzcsImV4cCI6MjA5NzcwNjE3N30.0CaEReFJcbPXk_3sI8nRdy8iU9Sl0n4S3VDbiw3Q7p8';
@@ -583,10 +588,10 @@ async function voteForWord(questionId, word, currentVotes) {
 // =========================================================================
 
 async function submitSurvey() {
-    if (!supabase) return;
-    
     // Loader sur le bouton
     const btn = document.getElementById('btn-next');
+    if (!btn) return;
+    
     const originalText = btn.innerHTML;
     btn.disabled = true;
     btn.innerHTML = 'Envoi... <span class="spinner">⏳</span>';
@@ -596,6 +601,14 @@ async function submitSurvey() {
         usage_contexts: selectedContexts,
         interests: interests
     };
+
+    if (!supabase) {
+        console.warn("Supabase non disponible. Mode démo actif.");
+        safeSetItem('survey_completed', 'true');
+        showSurveySuccessView();
+        showToast("Mode démo : Réponses enregistrées localement.", "info");
+        return;
+    }
 
     try {
         const { error } = await supabase
