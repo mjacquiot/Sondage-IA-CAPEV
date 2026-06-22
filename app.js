@@ -73,7 +73,7 @@ if (window.NodeList && !NodeList.prototype.forEach) {
 // Configuration Supabase
 const supabaseUrl = 'https://hkqawuxumimkainegqln.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhrcWF3dXh1bWlta2FpbmVncWxuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIxMzAxNzcsImV4cCI6MjA5NzcwNjE3N30.0CaEReFJcbPXk_3sI8nRdy8iU9Sl0n4S3VDbiw3Q7p8';
-let supabase = null;
+let supabaseClient = null;
 
 // Variables d'état global
 let currentStep = 1;
@@ -145,7 +145,7 @@ function initApp() {
     alert("Script app.js exécuté !");
     try {
         // Initialisation du client Supabase
-        supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+        supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
         initRealtime();
     } catch (e) {
         showToast("Erreur d'initialisation de Supabase. Vérifiez votre connexion.", "error");
@@ -188,14 +188,14 @@ if (document.readyState === 'loading') {
 // =========================================================================
 
 function initRealtime() {
-    if (!supabase) return;
+    if (!supabaseClient) return;
     
     // Déconnexion si déjà existant
     if (realtimeChannel) {
-        supabase.removeChannel(realtimeChannel);
+        supabaseClient.removeChannel(realtimeChannel);
     }
 
-    realtimeChannel = supabase
+    realtimeChannel = supabaseClient
         .channel('realtime-db-changes')
         .on(
             'postgres_changes',
@@ -486,10 +486,10 @@ function checkStep5Validity() {
 
 // Charger les mots depuis la DB
 async function loadWordCloud(questionId, isSilent = false) {
-    if (!supabase) return;
+    if (!supabaseClient) return;
     
     try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('word_cloud_inputs')
             .select('*')
             .eq('question_id', questionId)
@@ -600,7 +600,7 @@ async function submitNewWord(questionId, inputId) {
 
     try {
         // Insérer dans la base de données
-        const { error } = await supabase
+        const { error } = await supabaseClient
             .from('word_cloud_inputs')
             .insert([{ question_id: questionId, word: word, votes: 1 }]);
 
@@ -628,7 +628,7 @@ async function voteForWord(questionId, word, currentVotes) {
     if (safeGetItem(storageKey) === 'true') return;
 
     try {
-        const { error } = await supabase
+        const { error } = await supabaseClient
             .from('word_cloud_inputs')
             .update({ votes: currentVotes + 1 })
             .eq('question_id', questionId)
@@ -667,7 +667,7 @@ async function submitSurvey() {
         interests: interests
     };
 
-    if (!supabase) {
+    if (!supabaseClient) {
         console.warn("Supabase non disponible. Mode démo actif.");
         safeSetItem('survey_completed', 'true');
         showSurveySuccessView();
@@ -676,7 +676,7 @@ async function submitSurvey() {
     }
 
     try {
-        const { error } = await supabase
+        const { error } = await supabaseClient
             .from('survey_responses')
             .insert([surveyData]);
 
@@ -799,9 +799,9 @@ async function checkAdminSession() {
 }
 
 async function getSession() {
-    if (!supabase) return null;
+    if (!supabaseClient) return null;
     try {
-        const { data, error } = await supabase.auth.getSession();
+        const { data, error } = await supabaseClient.auth.getSession();
         if (error) return null;
         return data ? data.session : null;
     } catch (e) {
@@ -821,7 +821,7 @@ async function submitLogin() {
     btnSubmit.textContent = 'Connexion...';
 
     try {
-        const { data, error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabaseClient.auth.signInWithPassword({
             email: 'admin@admin.fr',
             password: password
         });
@@ -844,9 +844,9 @@ async function submitLogin() {
 }
 
 async function handleLogout() {
-    if (!supabase) return;
+    if (!supabaseClient) return;
     try {
-        await supabase.auth.signOut();
+        await supabaseClient.auth.signOut();
         showToast("Déconnexion réussie.", "info");
         checkAdminSession();
         window.location.hash = '#programme';
@@ -860,11 +860,11 @@ async function handleLogout() {
 // =========================================================================
 
 async function loadAdminDashboard() {
-    if (!supabase) return;
+    if (!supabaseClient) return;
 
     try {
         // 1. Charger toutes les réponses au sondage
-        const { data: responses, error: rError } = await supabase
+        const { data: responses, error: rError } = await supabaseClient
             .from('survey_responses')
             .select('*')
             .order('created_at', { ascending: false });
@@ -1097,7 +1097,7 @@ async function deleteCloudWord(id, word, questionId) {
     if (!confirm(`Voulez-vous vraiment supprimer définitivement le mot "${word}" ?`)) return;
 
     try {
-        const { error } = await supabase
+        const { error } = await supabaseClient
             .from('word_cloud_inputs')
             .delete()
             .eq('id', id);
@@ -1167,7 +1167,7 @@ async function deleteSurveyResponse(id) {
     if (!confirm("Voulez-vous vraiment supprimer cette réponse de participant ?")) return;
 
     try {
-        const { error } = await supabase
+        const { error } = await supabaseClient
             .from('survey_responses')
             .delete()
             .eq('id', id);
@@ -1192,13 +1192,13 @@ async function confirmResetDatabase() {
 
     try {
         // 1. Vider survey_responses
-        const { error: error1 } = await supabase
+        const { error: error1 } = await supabaseClient
             .from('survey_responses')
             .delete()
             .neq('profile', 'dummy'); // Suppression totale de toutes les lignes
 
         // 2. Vider word_cloud_inputs
-        const { error: error2 } = await supabase
+        const { error: error2 } = await supabaseClient
             .from('word_cloud_inputs')
             .delete()
             .neq('question_id', 'dummy'); // Suppression totale
