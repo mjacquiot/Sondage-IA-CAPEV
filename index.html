@@ -178,7 +178,7 @@
                 <!-- Barre de progression -->
                 <div class="progress-bar-container">
                     <div class="progress-bar-fill" id="progress-bar"></div>
-                    <span class="step-indicator" id="step-indicator-text">Étape 1 sur 5</span>
+                    <span class="step-indicator" id="step-indicator-text">Étape 1 sur 4</span>
                 </div>
 
                 <!-- ÉTAPE 1 : PROFIL -->
@@ -210,19 +210,20 @@
                     </div>
                 </div>
 
-                <!-- ÉTAPE 2 : CONTEXTES D'USAGE -->
+                <!-- ÉTAPE 2 : USAGES RECHERCHÉS -->
                 <div id="step-2" class="survey-step">
-                    <h2 class="step-title">Dans quels contextes envisagez-vous d'utiliser l'IA ?</h2>
-                    <p class="step-desc">Sélectionnez tous les cas d'usage qui vous intéressent (plusieurs choix possibles).</p>
+                    <h2 class="step-title">Dans quels contextes viseriez-vous l'utilisation de l'IA ? (Usages recherchés)</h2>
+                    <p class="step-desc">Ajoutez vos propres cas d'usage ou cliquez sur ceux déjà proposés par les autres participants pour voter et les faire grandir !</p>
                     
-                    <div class="context-grid">
-                        <div class="context-chip" data-context="Rédaction de courriers & rapports">Rédaction de courriers / rapports</div>
-                        <div class="context-chip" data-context="Synthèse de documents & notes">Synthèse de longs documents</div>
-                        <div class="context-chip" data-context="Recherche d'informations & veille">Recherche / Veille réglementaire</div>
-                        <div class="context-chip" data-context="Analyse de données & tableaux">Analyse de données / Chiffres</div>
-                        <div class="context-chip" data-context="Création de visuels & diaporamas">Création de présentations / visuels</div>
-                        <div class="context-chip" data-context="Aide au codage & automatisation">Aide au code / scripts / macros</div>
-                        <div class="context-chip" data-context="Brainstorming & idées de projets">Brainstorming / Génération d'idées</div>
+                    <!-- Nuage interactif -->
+                    <div class="word-cloud-wrapper" id="cloud-usages">
+                        <div class="word-cloud-empty">Chargement du nuage de mots...</div>
+                    </div>
+
+                    <!-- Champ d'ajout -->
+                    <div class="word-input-container">
+                        <input type="text" id="input-usage" class="input-modern" placeholder="Ex: Rédaction de rapports, Comptes-rendus..." maxlength="25">
+                        <button type="button" id="btn-add-usage" class="btn-add-word">Ajouter</button>
                     </div>
                 </div>
 
@@ -260,83 +261,7 @@
                     </div>
                 </div>
 
-                <!-- ÉTAPE 5 : INTÉRÊT PROGRAMME -->
-                <div id="step-5" class="survey-step">
-                    <h2 class="step-title">Quels thèmes éveillent le plus votre curiosité ?</h2>
-                    <p class="step-desc">Évaluez votre intérêt pour chaque module du programme de 1 (faible) à 5 (très fort) étoiles.</p>
-                    
-                    <div class="interest-list">
-                        <!-- Thème 1 -->
-                        <div class="interest-row">
-                            <div class="interest-header">
-                                <span class="interest-label">Module 1 : Fonctionnement théorique des LLM / IA</span>
-                                <div class="interest-stars" data-topic="fonctionnement">
-                                    <span class="star" data-value="1">☆</span>
-                                    <span class="star" data-value="2">☆</span>
-                                    <span class="star" data-value="3">☆</span>
-                                    <span class="star" data-value="4">☆</span>
-                                    <span class="star" data-value="5">☆</span>
-                                </div>
-                            </div>
-                        </div>
 
-                        <!-- Thème 2 -->
-                        <div class="interest-row">
-                            <div class="interest-header">
-                                <span class="interest-label">Module 2 : L'art du Prompting & dialogue efficace</span>
-                                <div class="interest-stars" data-topic="prompt">
-                                    <span class="star" data-value="1">☆</span>
-                                    <span class="star" data-value="2">☆</span>
-                                    <span class="star" data-value="3">☆</span>
-                                    <span class="star" data-value="4">☆</span>
-                                    <span class="star" data-value="5">☆</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Thème 3 -->
-                        <div class="interest-row">
-                            <div class="interest-header">
-                                <span class="interest-label">Module 3 : Sécurité des données, RGPD & risques</span>
-                                <div class="interest-stars" data-topic="securite">
-                                    <span class="star" data-value="1">☆</span>
-                                    <span class="star" data-value="2">☆</span>
-                                    <span class="star" data-value="3">☆</span>
-                                    <span class="star" data-value="4">☆</span>
-                                    <span class="star" data-value="5">☆</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Thème 4 -->
-                        <div class="interest-row">
-                            <div class="interest-header">
-                                <span class="interest-label">Module 4 : Hallucinations, fiabilité & vérification des sources</span>
-                                <div class="interest-stars" data-topic="hallucinations">
-                                    <span class="star" data-value="1">☆</span>
-                                    <span class="star" data-value="2">☆</span>
-                                    <span class="star" data-value="3">☆</span>
-                                    <span class="star" data-value="4">☆</span>
-                                    <span class="star" data-value="5">☆</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Thème 5 -->
-                        <div class="interest-row">
-                            <div class="interest-header">
-                                <span class="interest-label">Module 5 : Découverte pratique de la boîte à outils IA</span>
-                                <div class="interest-stars" data-topic="outils">
-                                    <span class="star" data-value="1">☆</span>
-                                    <span class="star" data-value="2">☆</span>
-                                    <span class="star" data-value="3">☆</span>
-                                    <span class="star" data-value="4">☆</span>
-                                    <span class="star" data-value="5">☆</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
 
                 <!-- Pied de page du formulaire (Contrôles) -->
                 <div class="wizard-footer">
@@ -358,6 +283,9 @@
                 <hr style="border: none; border-top: 1px solid var(--border-glass-light); margin: 2rem 0;">
                 
                 <!-- Vue consolidée des nuages en direct pour les participants -->
+                <h3 style="font-family:var(--font-heading); margin-bottom: 1rem; color: var(--color-accent);">Nuage en direct : Usages recherchés</h3>
+                <div class="word-cloud-wrapper" id="result-cloud-usages" style="min-height: 150px; margin-bottom: 2rem;"></div>
+
                 <h3 style="font-family:var(--font-heading); margin-bottom: 1rem; color: var(--color-accent);">Nuage en direct : Vos attentes</h3>
                 <div class="word-cloud-wrapper" id="result-cloud-attentes" style="min-height: 150px; margin-bottom: 2rem;"></div>
                 
@@ -413,20 +341,17 @@
                     </div>
                 </div>
 
-                <!-- Stat 4 : Intérêt pour les Modules -->
-                <div class="stat-card">
-                    <h3 class="stat-card-title">Intérêt Moyen par Module</h3>
-                    <div class="chart-container">
-                        <canvas id="chart-interests"></canvas>
-                    </div>
-                </div>
             </div>
 
             <!-- Section modération des nuages de mots -->
             <h2 style="font-family: var(--font-heading); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
                 💬 Modération des Nuages de Mots
             </h2>
-            <div class="admin-clouds-grid">
+            <div class="admin-clouds-grid" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));">
+                <div class="admin-cloud-card">
+                    <h3 style="font-family:var(--font-heading); margin-bottom: 1rem; color:var(--color-primary);">Usages recherchés</h3>
+                    <div class="admin-cloud-words" id="admin-cloud-usages"></div>
+                </div>
                 <div class="admin-cloud-card">
                     <h3 style="font-family:var(--font-heading); margin-bottom: 1rem; color:var(--color-primary-light);">Attentes</h3>
                     <div class="admin-cloud-words" id="admin-cloud-attentes"></div>
@@ -447,7 +372,6 @@
                                 <th>Date</th>
                                 <th>Profil</th>
                                 <th>Contextes visés</th>
-                                <th>Intérêts évalués</th>
                                 <th style="text-align: center; width: 80px;">Action</th>
                             </tr>
                         </thead>

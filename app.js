@@ -77,17 +77,11 @@ let supabaseClient = null;
 
 // Variables d'état global
 let currentStep = 1;
-const totalSteps = 5;
+const totalSteps = 4;
 let selectedProfile = '';
 let selectedContexts = [];
-let interests = {
-    fonctionnement: 0,
-    prompt: 0,
-    securite: 0,
-    hallucinations: 0,
-    outils: 0
-};
 let wordCloudsData = {
+    usages: [],
     attentes: [],
     outils: []
 };
@@ -142,11 +136,11 @@ function safeAddListener(id, event, callback) {
 
 // Initialisation globale robuste de l'application
 function initApp() {
-    alert("Script app.js exécuté !");
     try {
         // Initialisation du client Supabase
         supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
         initRealtime();
+        seedDefaultUsages();
     } catch (e) {
         showToast("Erreur d'initialisation de Supabase. Vérifiez votre connexion.", "error");
         reportError("Supabase init", e);
@@ -202,7 +196,9 @@ function initRealtime() {
             { event: '*', schema: 'public', table: 'word_cloud_inputs' },
             (payload) => {
                 // Si l'utilisateur est sur l'étape nuage actif
-                if (currentStep === 3) {
+                if (currentStep === 2) {
+                    loadWordCloud('usages', true);
+                } else if (currentStep === 3) {
                     loadWordCloud('attentes', true);
                 } else if (currentStep === 4) {
                     loadWordCloud('outils', true);
@@ -210,6 +206,7 @@ function initRealtime() {
                 
                 // Si le sondage est complété, recharger les nuages récapitulatifs
                 if (safeGetItem('survey_completed') === 'true' && window.location.hash === '#sondage') {
+                    loadWordCloud('usages', true).then(() => renderReadOnlyCloud('usages'));
                     loadWordCloud('attentes', true).then(() => renderReadOnlyCloud('attentes'));
                     loadWordCloud('outils', true).then(() => renderReadOnlyCloud('outils'));
                 }
@@ -309,20 +306,16 @@ function setupEventListeners() {
         });
     });
 
-    // Écouteurs pour l'étape 2 : Contextes
-    document.querySelectorAll('.context-chip').forEach(chip => {
-        chip.addEventListener('click', () => {
-            chip.classList.toggle('selected');
-            const context = chip.dataset.context;
-            if (chip.classList.contains('selected')) {
-                selectedContexts.push(context);
-            } else {
-                selectedContexts = selectedContexts.filter(c => c !== context);
-            }
-            const btnNext = document.getElementById('btn-next');
-            if (btnNext) btnNext.disabled = selectedContexts.length === 0;
-        });
+    // Écouteurs pour le nuage usages (Ajout par input)
+    safeAddListener('btn-add-usage', 'click', () => {
+        submitNewWord('usages', 'input-usage');
     });
+    const inputUsage = document.getElementById('input-usage');
+    if (inputUsage) {
+        inputUsage.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') submitNewWord('usages', 'input-usage');
+        });
+    }
 
     // Écouteurs pour les nuages de mots (Ajout par input)
     safeAddListener('btn-add-attente', 'click', () => {
@@ -344,33 +337,6 @@ function setupEventListeners() {
             if (e.key === 'Enter') submitNewWord('outils', 'input-outil');
         });
     }
-
-    // Écouteurs pour l'étape 5 : Évaluation des intérêts (Étoiles)
-    document.querySelectorAll('.interest-stars').forEach(container => {
-        const topic = container.dataset.topic;
-        const stars = container.querySelectorAll('.star');
-        stars.forEach(star => {
-            star.addEventListener('click', () => {
-                const val = parseInt(star.dataset.value);
-                interests[topic] = val;
-                
-                // Mettre à jour visuellement les étoiles
-                stars.forEach(s => {
-                    const sVal = parseInt(s.dataset.value);
-                    if (sVal <= val) {
-                        s.classList.add('active');
-                        s.textContent = '★';
-                    } else {
-                        s.classList.remove('active');
-                        s.textContent = '☆';
-                    }
-                });
-
-                // Vérifier si toutes les évaluations ont été faites
-                checkStep5Validity();
-            });
-        });
-    });
 
     // Bouton cadenas discret
     safeAddListener('btn-open-login', 'click', openLoginModal);
@@ -399,17 +365,15 @@ function resetSurveyWizard() {
     currentStep = 1;
     selectedProfile = '';
     selectedContexts = [];
-    interests = { fonctionnement: 0, prompt: 0, securite: 0, hallucinations: 0, outils: 0 };
     
     // Reset DOM
     document.querySelectorAll('.profile-card').forEach(c => c.classList.remove('selected'));
-    document.querySelectorAll('.context-chip').forEach(c => c.classList.remove('selected'));
-    document.querySelectorAll('.star').forEach(s => {
-        s.classList.remove('active');
-        s.textContent = '☆';
-    });
-    document.getElementById('input-attente').value = '';
-    document.getElementById('input-outil').value = '';
+    const inputUsage = document.getElementById('input-usage');
+    if (inputUsage) inputUsage.value = '';
+    const inputAttente = document.getElementById('input-attente');
+    if (inputAttente) inputAttente.value = '';
+    const inputOutil = document.getElementById('input-outil');
+    if (inputOutil) inputOutil.value = '';
 
     // Afficher premier écran de formulaire
     document.getElementById('survey-form-container').style.display = 'block';
@@ -437,21 +401,21 @@ function updateStepView() {
     
     if (currentStep === totalSteps) {
         document.getElementById('btn-next').innerHTML = 'Terminer <span style="font-size:1.1rem">✓</span>';
-        checkStep5Validity();
+        document.getElementById('btn-next').disabled = false;
     } else {
         document.getElementById('btn-next').innerHTML = 'Suivant <span style="font-size:1.1rem">→</span>';
         // Validation dynamique selon l'étape
         if (currentStep === 1) {
             document.getElementById('btn-next').disabled = !selectedProfile;
-        } else if (currentStep === 2) {
-            document.getElementById('btn-next').disabled = selectedContexts.length === 0;
         } else {
             document.getElementById('btn-next').disabled = false;
         }
     }
 
-    // Charger le nuage de mots de l'étape active (le temps réel gère les futures mises à jour)
-    if (currentStep === 3) {
+    // Charger le nuage de mots de l'étape active
+    if (currentStep === 2) {
+        loadWordCloud('usages');
+    } else if (currentStep === 3) {
         loadWordCloud('attentes');
     } else if (currentStep === 4) {
         loadWordCloud('outils');
@@ -473,11 +437,6 @@ function prevStep() {
         currentStep--;
         updateStepView();
     }
-}
-
-function checkStep5Validity() {
-    const allRated = Object.values(interests).every(val => val > 0);
-    document.getElementById('btn-next').disabled = !allRated;
 }
 
 // =========================================================================
@@ -525,18 +484,24 @@ function renderWordCloud(questionId) {
         const bubble = document.createElement('div');
         bubble.className = 'word-bubble';
         
-        // Vérifier si l'utilisateur a déjà voté pour ce mot sur cet appareil
+        let isSelected = false;
         const storageKey = `voted_${questionId}_${item.word.toLowerCase()}`;
-        const hasVoted = safeGetItem(storageKey) === 'true';
         
-        if (hasVoted) {
-            bubble.classList.add('voted');
+        if (questionId === 'usages') {
+            isSelected = selectedContexts.includes(item.word);
+            if (isSelected) {
+                bubble.classList.add('selected-interactive');
+            }
+        } else {
+            isSelected = safeGetItem(storageKey) === 'true';
+            if (isSelected) {
+                bubble.classList.add('voted');
+            }
         }
 
         // Calculer une taille proportionnelle (min: 0.85rem, max: 2.2rem)
         let fontSize = 0.9;
         if (maxVotes > 1) {
-            // Echelle logarithmique ou linéaire douce
             fontSize = 0.9 + (item.votes - 1) / (maxVotes - 1) * 1.3;
         }
         bubble.style.fontSize = `${fontSize}rem`;
@@ -555,14 +520,54 @@ function renderWordCloud(questionId) {
             <span class="word-count">${item.votes}</span>
         `;
 
-        // Événement clic pour voter
-        if (!hasVoted) {
-            bubble.addEventListener('click', () => voteForWord(questionId, item.word, item.votes));
-        }
+        // Événement clic
+        bubble.addEventListener('click', () => handleWordClick(questionId, item));
 
         container.appendChild(bubble);
     });
 }
+
+// Gère le clic sur un mot du nuage
+async function handleWordClick(questionId, item) {
+    if (questionId === 'usages') {
+        const wordLower = item.word.toLowerCase();
+        const index = selectedContexts.indexOf(item.word);
+        if (index > -1) {
+            // Désélectionner
+            selectedContexts.splice(index, 1);
+            renderWordCloud('usages');
+        } else {
+            // Sélectionner
+            selectedContexts.push(item.word);
+            
+            // Voter si pas déjà voté sur cet appareil
+            const storageKey = `voted_usages_${wordLower}`;
+            if (safeGetItem(storageKey) !== 'true') {
+                safeSetItem(storageKey, 'true');
+                try {
+                    await supabaseClient
+                        .from('word_cloud_inputs')
+                        .update({ votes: item.votes + 1 })
+                        .eq('question_id', 'usages')
+                        .eq('word', item.word);
+                    // Recharger pour mettre à jour les tailles et les votes
+                    await loadWordCloud('usages');
+                } catch (e) {
+                    console.error("Error voting for usage:", e);
+                }
+            } else {
+                renderWordCloud('usages');
+            }
+        }
+    } else {
+        // Pour les autres nuages, c'est un vote unique
+        const storageKey = `voted_${questionId}_${item.word.toLowerCase()}`;
+        if (safeGetItem(storageKey) === 'true') return;
+        
+        await voteForWord(questionId, item.word, item.votes);
+    }
+}
+
 
 // Soumission d'un nouveau mot
 async function submitNewWord(questionId, inputId) {
@@ -594,6 +599,9 @@ async function submitNewWord(questionId, inputId) {
         } else {
             voteForWord(questionId, existing.word, existing.votes);
         }
+        if (questionId === 'usages' && !selectedContexts.includes(existing.word)) {
+            selectedContexts.push(existing.word);
+        }
         input.value = '';
         return;
     }
@@ -608,6 +616,9 @@ async function submitNewWord(questionId, inputId) {
 
         // Marquer comme voté localement
         safeSetItem(`voted_${questionId}_${wordLower}`, 'true');
+        if (questionId === 'usages' && !selectedContexts.includes(word)) {
+            selectedContexts.push(word);
+        }
         
         input.value = '';
         showToast(`"${word}" a été ajouté !`, "success");
@@ -638,6 +649,9 @@ async function voteForWord(questionId, word, currentVotes) {
 
         // Enregistrer le vote localement
         safeSetItem(storageKey, 'true');
+        if (questionId === 'usages' && !selectedContexts.includes(word)) {
+            selectedContexts.push(word);
+        }
         showToast("Vote enregistré !", "success");
 
         // Recharger immédiatement le nuage
@@ -664,7 +678,7 @@ async function submitSurvey() {
     const surveyData = {
         profile: selectedProfile,
         usage_contexts: selectedContexts,
-        interests: interests
+        interests: {}
     };
 
     if (!supabaseClient) {
@@ -706,10 +720,12 @@ async function showSurveySuccessView() {
     document.getElementById('survey-form-container').style.display = 'none';
     document.getElementById('survey-success-container').style.display = 'block';
 
-    // Charger et afficher les deux nuages en mode lecture seule
+    // Charger et afficher les trois nuages en mode lecture seule
+    await loadWordCloud('usages');
     await loadWordCloud('attentes');
     await loadWordCloud('outils');
     
+    renderReadOnlyCloud('usages');
     renderReadOnlyCloud('attentes');
     renderReadOnlyCloud('outils');
 }
@@ -873,6 +889,7 @@ async function loadAdminDashboard() {
         surveyResponsesList = responses || [];
 
         // 2. Charger les nuages de mots
+        await loadWordCloud('usages');
         await loadWordCloud('attentes');
         await loadWordCloud('outils');
 
@@ -988,75 +1005,11 @@ function renderStats() {
         }
     });
 
-    // --- CHART 3 : INTÉRÊTS (RADAR) ---
-    const interestSums = { fonctionnement: 0, prompt: 0, securite: 0, hallucinations: 0, outils: 0 };
-    surveyResponsesList.forEach(r => {
-        if (r.interests) {
-            for (let topic in interestSums) {
-                interestSums[topic] += parseFloat(r.interests[topic] || 0);
-            }
-        }
-    });
-
-    const radarLabels = [
-        "M1: Fonctionnement",
-        "M2: Prompting",
-        "M3: Sécurité",
-        "M4: Hallucinations",
-        "M5: Outils"
-    ];
-    const radarData = [
-        (interestSums.fonctionnement / total).toFixed(1),
-        (interestSums.prompt / total).toFixed(1),
-        (interestSums.securite / total).toFixed(1),
-        (interestSums.hallucinations / total).toFixed(1),
-        (interestSums.outils / total).toFixed(1)
-    ];
-
-    const ctxInterests = document.getElementById('chart-interests').getContext('2d');
-    chartInterests = new Chart(ctxInterests, {
-        type: 'radar',
-        data: {
-            labels: radarLabels,
-            datasets: [{
-                label: 'Intérêt Moyen',
-                data: radarData,
-                backgroundColor: 'rgba(147, 51, 234, 0.1)',
-                borderColor: '#9333ea',
-                pointBackgroundColor: '#9333ea',
-                pointBorderColor: '#fff',
-                borderWidth: 2
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false }
-            },
-            scales: {
-                r: {
-                    angleLines: { color: 'rgba(15, 23, 42, 0.08)' },
-                    grid: { color: 'rgba(15, 23, 42, 0.08)' },
-                    pointLabels: {
-                        color: '#475569',
-                        font: { size: 9, family: 'Inter' }
-                    },
-                    ticks: {
-                        color: '#475569',
-                        backdropColor: 'transparent',
-                        stepSize: 1,
-                        min: 0,
-                        max: 5
-                    }
-                }
-            }
-        }
-    });
 }
 
 // Rendu des nuages de mots avec outils de modération (Suppression)
 function renderAdminClouds() {
+    renderAdminCloudContainer('usages', 'admin-cloud-usages');
     renderAdminCloudContainer('attentes', 'admin-cloud-attentes');
     renderAdminCloudContainer('outils', 'admin-cloud-outils');
 }
@@ -1120,7 +1073,7 @@ function renderRawDataTable() {
     tbody.innerHTML = '';
 
     if (surveyResponsesList.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 2rem; color: var(--text-muted-light);">Aucune réponse enregistrée pour le moment.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 2rem; color: var(--text-muted-light);">Aucune réponse enregistrée pour le moment.</td></tr>';
         return;
     }
 
@@ -1135,19 +1088,10 @@ function renderRawDataTable() {
         // Formater les contextes
         const contextsStr = r.usage_contexts ? r.usage_contexts.join(', ') : '';
 
-        // Formater les intérêts sous forme condensée
-        let interestsStr = '';
-        if (r.interests) {
-            interestsStr = Object.entries(r.interests)
-                .map(([k, v]) => `${k.substring(0,4)}:${v}/5`)
-                .join(' | ');
-        }
-
         tr.innerHTML = `
             <td style="font-weight: 600; color:var(--text-light)">${dateStr}</td>
             <td style="color: var(--color-accent); font-weight: 500;">${escapeHTML(r.profile)}</td>
             <td>${escapeHTML(contextsStr)}</td>
-            <td style="font-size:0.8rem; font-family: monospace;">${escapeHTML(interestsStr)}</td>
             <td style="text-align: center;">
                 <button class="btn-delete-word" style="font-size:1.2rem;" title="Supprimer cette réponse" data-id="${r.id}">×</button>
             </td>
@@ -1228,7 +1172,7 @@ function exportDataToCSV() {
     csvContent += "\uFEFF";
 
     // En-tête
-    csvContent += "Date Soumission;Profil Rôle;Contextes d'Usage IA;Fonctionnement IA (Note);Prompting (Note);Sécurité & Réglementation (Note);Hallucinations (Note);Panorama des Outils (Note)\n";
+    csvContent += "Date Soumission;Profil Rôle;Usages recherchés (Contextes d'Usage)\n";
 
     // Lignes
     surveyResponsesList.forEach(r => {
@@ -1236,14 +1180,7 @@ function exportDataToCSV() {
         const profile = r.profile ? `"${r.profile.replace(/"/g, '""')}"` : "";
         const contexts = r.usage_contexts ? `"${r.usage_contexts.join(', ').replace(/"/g, '""')}"` : "";
         
-        const interestsObj = r.interests || {};
-        const f = interestsObj.fonctionnement || 0;
-        const p = interestsObj.prompt || 0;
-        const s = interestsObj.securite || 0;
-        const h = interestsObj.hallucinations || 0;
-        const o = interestsObj.outils || 0;
-
-        csvContent += `${dateStr};${profile};${contexts};${f};${p};${s};${h};${o}\n`;
+        csvContent += `${dateStr};${profile};${contexts}\n`;
     });
 
     // Création du lien de téléchargement
@@ -1360,5 +1297,39 @@ function sanitizeAndCleanWord(word) {
 
     // Capitaliser la première lettre
     return w.charAt(0).toUpperCase() + w.slice(1);
+}
+
+// Auto-seeding des usages par défaut si vide dans la DB
+async function seedDefaultUsages() {
+    if (!supabaseClient) return;
+    try {
+        const { data, error } = await supabaseClient
+            .from('word_cloud_inputs')
+            .select('id')
+            .eq('question_id', 'usages')
+            .limit(1);
+        
+        if (error) throw error;
+        
+        if (!data || data.length === 0) {
+            const defaultUsages = [
+                "Rédaction de courriers & rapports",
+                "Synthèse de documents & notes",
+                "Recherche d'informations & veille",
+                "Analyse de données & chiffres",
+                "Création de visuels & diaporamas",
+                "Aide au codage & automatisation",
+                "Brainstorming & idées de projets"
+            ].map(word => ({
+                question_id: 'usages',
+                word: word,
+                votes: 1
+            }));
+            
+            await supabaseClient.from('word_cloud_inputs').insert(defaultUsages);
+        }
+    } catch (e) {
+        console.warn("Seeding usages ignored (already seeded or connection error):", e);
+    }
 }
 
