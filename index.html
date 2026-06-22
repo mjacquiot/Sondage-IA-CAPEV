@@ -41,98 +41,76 @@
            VUE 1 : PRÉSENTATION DU PROGRAMME
            ========================================================================= -->
         <main id="view-programme" class="app-view active-view">
-            <section class="hero-section">
-                <div class="hero-badge">Session du 28 Septembre 2026</div>
-                <h1 class="hero-title">L'Intelligence Artificielle au Service de la Fonction Publique Territoriale</h1>
-                <p class="hero-subtitle">
-                    Une journée d'immersion complète, 100% adaptée à votre quotidien professionnel. Découvrez, comprenez et apprenez à maîtriser les outils de demain.
-                </p>
-                <a href="#sondage" class="btn-cta">Participer au sondage de rentrée <span>→</span></a>
-            </section>
-
-            <!-- Bannière Dynamique - Pédagogie Active -->
-            <div class="banner-dynamic">
-                <div class="banner-icon">⚡</div>
-                <div class="banner-content">
-                    <h3>Une formation active, rythmée et 100% pratique</h3>
-                    <p>
-                        Oubliez les cours magistraux théoriques ! Cette journée sera rythmée par une alternance continue d'exercices individuels et collectifs intégrés au sein de chaque module. Le contenu et les ateliers seront ajustés sur-mesure en fonction de vos profils et des résultats du sondage ci-dessus.
+            <div class="programme-split">
+                <!-- Côté gauche : Titres et Engagement Pédagogique -->
+                <div class="programme-left">
+                    <div class="hero-badge">Session du 28 Septembre 2026</div>
+                    <h1 class="hero-title-compact">L'IA dans votre Collectivité</h1>
+                    <p class="hero-desc-compact">
+                        Une journée d'immersion complète et sur-mesure au service des agents de la fonction publique territoriale.
                     </p>
-                </div>
-            </div>
-
-            <!-- Grille du Programme -->
-            <h2 style="font-family: var(--font-heading); font-size: 2rem; margin-bottom: 2rem; text-align: center;">Le Programme de la Journée</h2>
-            
-            <div class="program-grid">
-                
-                <!-- Module 1 -->
-                <div class="program-card">
-                    <div class="card-num">Module 01</div>
-                    <h3 class="card-title">Fonctionnement de l'IA</h3>
-                    <p class="card-desc">Démystifier les coulisses de l'intelligence artificielle pour mieux en saisir le potentiel.</p>
-                    <ul class="card-topics">
-                        <li>Introduction aux réseaux de neurones</li>
-                        <li>Comment fonctionnent les modèles de langage (LLM)</li>
-                        <li>Les limites actuelles de la technologie</li>
-                    </ul>
+                    
+                    <div class="badge-pedagogy">
+                        <span class="badge-pedagogy-icon">⚡</span>
+                        <div class="badge-pedagogy-text">
+                            <strong>Pédagogie active & rythmée</strong>
+                            <p>Des exercices individuels et collectifs intégrés tout au long de la journée, adaptés à vos profils métiers.</p>
+                        </div>
+                    </div>
+                    
+                    <a href="#sondage" class="btn-cta-compact">Démarrer le sondage de rentrée <span>→</span></a>
                 </div>
 
-                <!-- Module 2 -->
-                <div class="program-card">
-                    <div class="card-num">Module 02</div>
-                    <h3 class="card-title">L'Art du Prompting</h3>
-                    <p class="card-desc">Apprendre à parler la langue des machines pour obtenir des réponses ultra-pertinentes.</p>
-                    <ul class="card-topics">
-                        <li>Les structures de prompts efficaces</li>
-                        <li>Donner un rôle, un contexte et des contraintes</li>
-                        <li>Méthodes avancées (Few-shot, Chain-of-thought)</li>
-                    </ul>
+                <!-- Côté droit : Les 5 Modules très visuels -->
+                <div class="programme-right">
+                    <h2 class="section-title-compact">Les Modules de la Journée</h2>
+                    <div class="compact-modules">
+                        <!-- Module 1 -->
+                        <div class="module-card-compact" title="Comprendre le fonctionnement technique et ses limites.">
+                            <span class="module-num-compact">01</span>
+                            <div class="module-info-compact">
+                                <h3>Fonctionnement de l'IA</h3>
+                                <p>Fonctionnement des LLM, réseaux de neurones et limites techniques.</p>
+                            </div>
+                        </div>
+
+                        <!-- Module 2 -->
+                        <div class="module-card-compact" title="Savoir dialoguer efficacement avec les modèles.">
+                            <span class="module-num-compact">02</span>
+                            <div class="module-info-compact">
+                                <h3>L'Art du Prompting</h3>
+                                <p>Rôles, contextes, contraintes et méthodes avancées de dialogue.</p>
+                            </div>
+                        </div>
+
+                        <!-- Module 3 -->
+                        <div class="module-card-compact" title="Assurer le respect du RGPD et la confidentialité.">
+                            <span class="module-num-compact">03</span>
+                            <div class="module-info-compact">
+                                <h3>Sécurité & Réglementation</h3>
+                                <p>RGPD, confidentialité des données publiques et sécurité informatique.</p>
+                            </div>
+                        </div>
+
+                        <!-- Module 4 -->
+                        <div class="module-card-compact" title="Garder un esprit critique face aux résultats.">
+                            <span class="module-num-compact">04</span>
+                            <div class="module-info-compact">
+                                <h3>Fiabilité & Hallucinations</h3>
+                                <p>Fiabilité des modèles, vérification des faits et contrôle humain.</p>
+                            </div>
+                        </div>
+
+                        <!-- Module 5 -->
+                        <div class="module-card-compact" title="Découvrir les solutions adaptées à vos tâches.">
+                            <span class="module-num-compact">05</span>
+                            <div class="module-info-compact">
+                                <h3>Panorama des Outils IA</h3>
+                                <p>ChatGPT, Claude, Gemini, outils de bureautique et génération d'images.</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-
-                <!-- Module 3 -->
-                <div class="program-card">
-                    <div class="card-num">Module 03</div>
-                    <h3 class="card-title">Sécurité & Réglementation</h3>
-                    <p class="card-desc">Maîtriser le cadre légal et sécuritaire pour une utilisation sereine dans l'administration.</p>
-                    <ul class="card-topics">
-                        <li>RGPD et protection des données publiques</li>
-                        <li>Confidentialité des informations saisies</li>
-                        <li>Les bonnes pratiques de sécurité informatique</li>
-                    </ul>
-                </div>
-
-                <!-- Module 4 -->
-                <div class="program-card">
-                    <div class="card-num">Module 04</div>
-                    <h3 class="card-title">Fiabilité & Hallucinations</h3>
-                    <p class="card-desc">Développer son esprit critique face aux réponses générées par les modèles d'IA.</p>
-                    <ul class="card-topics">
-                        <li>Pourquoi et comment l'IA hallucine</li>
-                        <li>Méthodes de vérification et recoupement des faits</li>
-                        <li>Garder le contrôle humain sur les livrables</li>
-                    </ul>
-                </div>
-
-                <!-- Module 5 -->
-                <div class="program-card">
-                    <div class="card-num">Module 05</div>
-                    <h3 class="card-title">Panorama des Outils</h3>
-                    <p class="card-desc">Découverte pratique de la boîte à outils disponible pour automatiser vos tâches quotidiennes.</p>
-                    <ul class="card-topics">
-                        <li>ChatGPT, Claude, Gemini : comparatif</li>
-                        <li>Génération de visuels et de présentations</li>
-                        <li>Outils d'aide à la bureautique courante</li>
-                    </ul>
-                </div>
-
-            </div>
-
-            <!-- Call to Action de fin -->
-            <div class="program-cta">
-                <h3>Prêt à façonner votre formation ?</h3>
-                <p>Répondez en 2 minutes à notre sondage anonyme. Vos réponses permettront au formateur d'ajuster le contenu et de choisir des cas pratiques au plus près de votre métier.</p>
-                <a href="#sondage" class="btn-cta">Démarrer le sondage interactif</a>
             </div>
         </main>
 

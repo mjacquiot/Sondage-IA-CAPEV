@@ -30,8 +30,8 @@ let chartContexts = null;
 let chartInterests = null;
 let realtimeChannel = null;
 
-// Initialisation au chargement du DOM
-document.addEventListener('DOMContentLoaded', () => {
+// Initialisation globale robuste de l'application
+function initApp() {
     try {
         // Initialisation du client Supabase
         supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
@@ -50,7 +50,14 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Vérification de session admin existante
     checkAdminSession();
-});
+}
+
+// Vérification de l'état de chargement du document pour parer aux chargements asynchrones/différés
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initApp);
+} else {
+    initApp();
+}
 
 // =========================================================================
 // INITIALISATION TEMPS RÉEL (REALTIME WEB-SOCKETS)
@@ -300,18 +307,11 @@ function updateStepView() {
         }
     }
 
-    // Gérer l'actualisation en temps réel des nuages de mots sur les étapes correspondantes
-    if (refreshInterval) {
-        clearInterval(refreshInterval);
-        refreshInterval = null;
-    }
-
+    // Charger le nuage de mots de l'étape active (le temps réel gère les futures mises à jour)
     if (currentStep === 3) {
         loadWordCloud('attentes');
-        refreshInterval = setInterval(() => loadWordCloud('attentes', true), 15000); // toutes les 15s
     } else if (currentStep === 4) {
         loadWordCloud('outils');
-        refreshInterval = setInterval(() => loadWordCloud('outils', true), 15000); // toutes les 15s
     }
 }
 
