@@ -2,6 +2,41 @@
 // LOGIQUE APPLICATIVE - FORMATION IA CNFPT
 // =========================================================================
 
+// Débugger d'erreurs visuel (remote debugging)
+window.addEventListener('error', function(e) {
+    const errorDiv = document.createElement('div');
+    errorDiv.style.position = 'fixed';
+    errorDiv.style.top = '0';
+    errorDiv.style.left = '0';
+    errorDiv.style.width = '100%';
+    errorDiv.style.background = '#ef4444';
+    errorDiv.style.color = '#ffffff';
+    errorDiv.style.padding = '1rem';
+    errorDiv.style.zIndex = '9999';
+    errorDiv.style.fontSize = '0.9rem';
+    errorDiv.style.fontFamily = 'monospace';
+    errorDiv.style.whiteSpace = 'pre-wrap';
+    errorDiv.innerHTML = '<strong>[Erreur JS]</strong> ' + e.message + ' (ligne ' + e.lineno + ')';
+    document.body.appendChild(errorDiv);
+});
+
+window.addEventListener('unhandledrejection', function(e) {
+    const errorDiv = document.createElement('div');
+    errorDiv.style.position = 'fixed';
+    errorDiv.style.top = '0';
+    errorDiv.style.left = '0';
+    errorDiv.style.width = '100%';
+    errorDiv.style.background = '#f59e0b';
+    errorDiv.style.color = '#ffffff';
+    errorDiv.style.padding = '1rem';
+    errorDiv.style.zIndex = '9999';
+    errorDiv.style.fontSize = '0.9rem';
+    errorDiv.style.fontFamily = 'monospace';
+    errorDiv.style.whiteSpace = 'pre-wrap';
+    errorDiv.innerHTML = '<strong>[Erreur Promesse]</strong> ' + (e.reason ? (e.reason.message || e.reason) : 'Promesse rejetée');
+    document.body.appendChild(errorDiv);
+});
+
 // Polyfill pour NodeList.prototype.forEach (compatibilité anciens navigateurs)
 if (window.NodeList && !NodeList.prototype.forEach) {
     NodeList.prototype.forEach = Array.prototype.forEach;
