@@ -14,6 +14,9 @@
     
     <!-- Supabase JS Client CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
@@ -366,24 +369,24 @@
                 <!-- Stat 2 : Répartition Profils -->
                 <div class="stat-card">
                     <h3 class="stat-card-title">Profils des participants</h3>
-                    <div class="stat-bar-list" id="stat-profiles-list">
-                        <!-- Rempli dynamiquement -->
+                    <div class="chart-container">
+                        <canvas id="chart-profiles"></canvas>
                     </div>
                 </div>
 
                 <!-- Stat 3 : Contextes d'usage prioritaires -->
                 <div class="stat-card">
                     <h3 class="stat-card-title">Usages recherchés</h3>
-                    <div class="stat-bar-list" id="stat-contexts-list">
-                        <!-- Rempli dynamiquement -->
+                    <div class="chart-container">
+                        <canvas id="chart-contexts"></canvas>
                     </div>
                 </div>
 
                 <!-- Stat 4 : Intérêt pour les Modules -->
                 <div class="stat-card">
                     <h3 class="stat-card-title">Intérêt Moyen par Module</h3>
-                    <div class="stat-bar-list" id="stat-interests-list">
-                        <!-- Rempli dynamiquement -->
+                    <div class="chart-container">
+                        <canvas id="chart-interests"></canvas>
                     </div>
                 </div>
             </div>

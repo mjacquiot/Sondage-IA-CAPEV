@@ -25,12 +25,17 @@ let wordCloudsData = {
 };
 let surveyResponsesList = [];
 let refreshInterval = null;
+let chartProfiles = null;
+let chartContexts = null;
+let chartInterests = null;
+let realtimeChannel = null;
 
 // Initialisation au chargement du DOM
 document.addEventListener('DOMContentLoaded', () => {
     try {
         // Initialisation du client Supabase
         supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+        initRealtime();
     } catch (e) {
         showToast("Erreur d'initialisation de Supabase. Vérifiez votre connexion.", "error");
         console.error("Supabase init error:", e);
@@ -46,6 +51,55 @@ document.addEventListener('DOMContentLoaded', () => {
     // Vérification de session admin existante
     checkAdminSession();
 });
+
+// =========================================================================
+// INITIALISATION TEMPS RÉEL (REALTIME WEB-SOCKETS)
+// =========================================================================
+
+function initRealtime() {
+    if (!supabase) return;
+    
+    // Déconnexion si déjà existant
+    if (realtimeChannel) {
+        supabase.removeChannel(realtimeChannel);
+    }
+
+    realtimeChannel = supabase
+        .channel('realtime-db-changes')
+        .on(
+            'postgres_changes',
+            { event: '*', schema: 'public', table: 'word_cloud_inputs' },
+            (payload) => {
+                // Si l'utilisateur est sur l'étape nuage actif
+                if (currentStep === 3) {
+                    loadWordCloud('attentes', true);
+                } else if (currentStep === 4) {
+                    loadWordCloud('outils', true);
+                }
+                
+                // Si le sondage est complété, recharger les nuages récapitulatifs
+                if (localStorage.getItem('survey_completed') === 'true' && window.location.hash === '#sondage') {
+                    loadWordCloud('attentes', true).then(() => renderReadOnlyCloud('attentes'));
+                    loadWordCloud('outils', true).then(() => renderReadOnlyCloud('outils'));
+                }
+
+                // Si l'admin regarde son dashboard
+                if (window.location.hash === '#admin') {
+                    loadAdminDashboard();
+                }
+            }
+        )
+        .on(
+            'postgres_changes',
+            { event: '*', schema: 'public', table: 'survey_responses' },
+            (payload) => {
+                if (window.location.hash === '#admin') {
+                    loadAdminDashboard();
+                }
+            }
+        )
+        .subscribe();
+}
 
 // =========================================================================
 // ROUTAGE SPA
@@ -370,11 +424,15 @@ function renderWordCloud(questionId) {
 // Soumission d'un nouveau mot
 async function submitNewWord(questionId, inputId) {
     const input = document.getElementById(inputId);
-    let word = input.value.trim();
-    if (!word) return;
+    const rawInput = input.value;
+    const word = sanitizeAndCleanWord(rawInput);
+    
+    if (!word) {
+        showToast("Mot vide ou de liaison ignoré.", "info");
+        input.value = '';
+        return;
+    }
 
-    // Nettoyage et formatage simple
-    word = word.replace(/\s+/g, ' ');
     if (word.length > 25) {
         showToast("Le mot ou l'expression est trop long (max 25 car.)", "info");
         return;
@@ -682,38 +740,55 @@ function renderStats() {
     const total = surveyResponsesList.length;
     document.getElementById('stat-total-respondents').textContent = total;
 
-    if (total === 0) {
-        document.getElementById('stat-profiles-list').innerHTML = '<div class="word-cloud-empty">Aucune donnée.</div>';
-        document.getElementById('stat-contexts-list').innerHTML = '<div class="word-cloud-empty">Aucune donnée.</div>';
-        document.getElementById('stat-interests-list').innerHTML = '<div class="word-cloud-empty">Aucune donnée.</div>';
-        return;
-    }
+    // Détruire les instances existantes pour éviter le bug de superposition Chart.js
+    if (chartProfiles) { chartProfiles.destroy(); chartProfiles = null; }
+    if (chartContexts) { chartContexts.destroy(); chartContexts = null; }
+    if (chartInterests) { chartInterests.destroy(); chartInterests = null; }
 
-    // --- ANALYSE DES PROFILS ---
+    if (total === 0) return;
+
+    // --- CHART 1 : PROFILS (DONUT) ---
     const profileCounts = {};
     surveyResponsesList.forEach(r => {
         profileCounts[r.profile] = (profileCounts[r.profile] || 0) + 1;
     });
+    const profileLabels = Object.keys(profileCounts);
+    const profileData = Object.values(profileCounts);
 
-    let profilesHTML = '';
-    const sortedProfiles = Object.entries(profileCounts).sort((a, b) => b[1] - a[1]);
-    sortedProfiles.forEach(([prof, count]) => {
-        const pct = ((count / total) * 100).toFixed(0);
-        profilesHTML += `
-            <div class="stat-bar-row">
-                <div class="stat-bar-labels">
-                    <span class="stat-bar-label-name">${escapeHTML(prof)}</span>
-                    <span>${count} (${pct}%)</span>
-                </div>
-                <div class="stat-bar-track">
-                    <div class="stat-bar-fill" style="width: ${pct}%"></div>
-                </div>
-            </div>
-        `;
+    const ctxProfiles = document.getElementById('chart-profiles').getContext('2d');
+    chartProfiles = new Chart(ctxProfiles, {
+        type: 'doughnut',
+        data: {
+            labels: profileLabels,
+            datasets: [{
+                data: profileData,
+                backgroundColor: [
+                    '#4f46e5', // Indigo
+                    '#06b6d4', // Cyan
+                    '#9333ea', // Purple
+                    '#10b981', // Emerald
+                    '#f59e0b'  // Amber
+                ],
+                borderWidth: 1,
+                borderColor: '#0f172a'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: {
+                        color: '#94a3b8',
+                        font: { family: 'Inter', size: 10 }
+                    }
+                }
+            }
+        }
     });
-    document.getElementById('stat-profiles-list').innerHTML = profilesHTML;
 
-    // --- ANALYSE DES CONTEXTES ---
+    // --- CHART 2 : CONTEXTES (BAR HORIZONTAL) ---
     const contextCounts = {};
     surveyResponsesList.forEach(r => {
         if (r.usage_contexts && Array.isArray(r.usage_contexts)) {
@@ -722,26 +797,43 @@ function renderStats() {
             });
         }
     });
-
-    let contextsHTML = '';
     const sortedContexts = Object.entries(contextCounts).sort((a, b) => b[1] - a[1]);
-    sortedContexts.forEach(([ctx, count]) => {
-        const pct = ((count / total) * 100).toFixed(0);
-        contextsHTML += `
-            <div class="stat-bar-row">
-                <div class="stat-bar-labels">
-                    <span class="stat-bar-label-name">${escapeHTML(ctx)}</span>
-                    <span>${count} (${pct}%)</span>
-                </div>
-                <div class="stat-bar-track">
-                    <div class="stat-bar-fill" style="width: ${pct}%"></div>
-                </div>
-            </div>
-        `;
-    });
-    document.getElementById('stat-contexts-list').innerHTML = contextsHTML;
+    const contextLabels = sortedContexts.map(e => e[0]);
+    const contextData = sortedContexts.map(e => e[1]);
 
-    // --- ANALYSE DES INTÉRÊTS (MOYENNES DES SUJETS DU PROGRAMME) ---
+    const ctxContexts = document.getElementById('chart-contexts').getContext('2d');
+    chartContexts = new Chart(ctxContexts, {
+        type: 'bar',
+        data: {
+            labels: contextLabels,
+            datasets: [{
+                label: 'Votes',
+                data: contextData,
+                backgroundColor: '#06b6d4',
+                borderRadius: 4
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                x: {
+                    grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                    ticks: { color: '#94a3b8', stepSize: 1 }
+                },
+                y: {
+                    grid: { display: false },
+                    ticks: { color: '#94a3b8', font: { size: 10 } }
+                }
+            }
+        }
+    });
+
+    // --- CHART 3 : INTÉRÊTS (RADAR) ---
     const interestSums = { fonctionnement: 0, prompt: 0, securite: 0, hallucinations: 0, outils: 0 };
     surveyResponsesList.forEach(r => {
         if (r.interests) {
@@ -751,31 +843,61 @@ function renderStats() {
         }
     });
 
-    const labelsMap = {
-        fonctionnement: "Fonctionnement IA",
-        prompt: "L'art du Prompting",
-        securite: "Sécurité & Réglementation",
-        hallucinations: "Fiabilité & Hallucinations",
-        outils: "Panorama des Outils"
-    };
+    const radarLabels = [
+        "M1: Fonctionnement",
+        "M2: Prompting",
+        "M3: Sécurité",
+        "M4: Hallucinations",
+        "M5: Outils"
+    ];
+    const radarData = [
+        (interestSums.fonctionnement / total).toFixed(1),
+        (interestSums.prompt / total).toFixed(1),
+        (interestSums.securite / total).toFixed(1),
+        (interestSums.hallucinations / total).toFixed(1),
+        (interestSums.outils / total).toFixed(1)
+    ];
 
-    let interestsHTML = '';
-    for (let topic in interestSums) {
-        const avg = (interestSums[topic] / total).toFixed(1);
-        const pct = ((parseFloat(avg) / 5) * 100).toFixed(0);
-        interestsHTML += `
-            <div class="stat-bar-row">
-                <div class="stat-bar-labels">
-                    <span class="stat-bar-label-name">${labelsMap[topic]}</span>
-                    <span>Moyenne : ${avg} / 5</span>
-                </div>
-                <div class="stat-bar-track">
-                    <div class="stat-bar-fill" style="width: ${pct}%; background: linear-gradient(to right, var(--color-purple-light), var(--color-purple))"></div>
-                </div>
-            </div>
-        `;
-    }
-    document.getElementById('stat-interests-list').innerHTML = interestsHTML;
+    const ctxInterests = document.getElementById('chart-interests').getContext('2d');
+    chartInterests = new Chart(ctxInterests, {
+        type: 'radar',
+        data: {
+            labels: radarLabels,
+            datasets: [{
+                label: 'Intérêt Moyen',
+                data: radarData,
+                backgroundColor: 'rgba(147, 51, 234, 0.2)',
+                borderColor: '#c084fc',
+                pointBackgroundColor: '#9333ea',
+                pointBorderColor: '#fff',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                r: {
+                    angleLines: { color: 'rgba(255, 255, 255, 0.08)' },
+                    grid: { color: 'rgba(255, 255, 255, 0.08)' },
+                    pointLabels: {
+                        color: '#94a3b8',
+                        font: { size: 9, family: 'Inter' }
+                    },
+                    ticks: {
+                        color: '#94a3b8',
+                        backdropColor: 'transparent',
+                        stepSize: 1,
+                        min: 0,
+                        max: 5
+                    }
+                }
+            }
+        }
+    });
 }
 
 // Rendu des nuages de mots avec outils de modération (Suppression)
@@ -1025,3 +1147,62 @@ function escapeHTML(str) {
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#039;');
 }
+
+// Nettoyage et normalisation des mots saisis dans le nuage
+function sanitizeAndCleanWord(word) {
+    if (!word) return null;
+    
+    // Nettoyer les espaces multiples et mettre en minuscules
+    let w = word.trim().toLowerCase().replace(/\s+/g, ' ');
+    
+    // Liste des mots vides (stop words) en français
+    const stopWords = [
+        'le', 'la', 'les', 'un', 'une', 'des', 'de', 'du', 'en', 'pour', 
+        'et', 'ou', 'sur', 'avec', 'dans', 'par', 'ce', 'ces', 'ma', 'mon', 
+        'mes', 'ta', 'ton', 'tes', 'sa', 'son', 'ses', 'au', 'aux', 'd', 
+        'l', 'qu', 'que', 'qui', 'se', 'sa', 'son', 'je', 'tu', 'il', 'nous',
+        'vous', 'ils', 'elle', 'elles'
+    ];
+    
+    // Si c'est un mot vide seul, on l'ignore
+    if (stopWords.includes(w)) {
+        return null;
+    }
+
+    // Retirer la ponctuation simple en début/fin de mot
+    w = w.replace(/^[^a-zA-Z0-9À-ÿ]+|[^a-zA-Z0-9À-ÿ]+$/g, '');
+
+    // Règle de pluralisation basique en français (enlever le 's' final)
+    if (w.length > 3 && w.endsWith('s')) {
+        // Liste d'exceptions à conserver avec leur 's' (mots courants en IA ou bureautique)
+        const exceptions = ['focus', 'process', 'cours', 'ia', 'axis', 'temps', 'progrès', 'accès'];
+        if (!exceptions.includes(w)) {
+            w = w.slice(0, -1);
+        }
+    }
+
+    if (!w) return null;
+
+    // Harmonisation esthétique pour les outils connus
+    const specialCases = {
+        'chatgpt': 'ChatGPT',
+        'midjourney': 'Midjourney',
+        'copilot': 'Copilot',
+        'gemini': 'Gemini',
+        'claude': 'Claude',
+        'dall-e': 'DALL-E',
+        'dalle': 'DALL-E',
+        'canva': 'Canva',
+        'heygen': 'HeyGen',
+        'suno': 'Suno',
+        'udio': 'Udio'
+    };
+
+    if (specialCases[w]) {
+        return specialCases[w];
+    }
+
+    // Capitaliser la première lettre
+    return w.charAt(0).toUpperCase() + w.slice(1);
+}
+

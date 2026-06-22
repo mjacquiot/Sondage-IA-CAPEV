@@ -92,3 +92,22 @@ create policy "Permettre le vote public (mise à jour) sur les mots"
 create policy "Permettre la modération (suppression) uniquement à l'admin authentifié" 
     on public.word_cloud_inputs for delete 
     using (auth.role() = 'authenticated');
+
+-- =========================================================================
+-- ACTIVATION DE SUPABASE REALTIME (TEMPS RÉEL)
+-- =========================================================================
+-- Ajoute les tables à la publication temps réel pour activer les WebSockets.
+-- IMPORTANT : Si ces commandes échouent ou si la publication n'existe pas,
+-- assurez-vous que la publication 'supabase_realtime' est créée dans votre projet.
+do $$
+begin
+  create publication supabase_realtime;
+exception when others then
+  -- Ne fait rien si la publication existe déjà
+  null;
+end $$;
+
+alter publication supabase_realtime add table public.word_cloud_inputs;
+alter publication supabase_realtime add table public.survey_responses;
+
+

@@ -1241,3 +1241,14 @@ body {
         text-align: center;
     }
 }
+
+/* =========================================================================
+   CONTENEURS DE GRAPHIQUES (CHART.JS)
+   ========================================================================= */
+.chart-container {
+    position: relative;
+    height: 240px;
+    width: 100%;
+    margin-top: 0.5rem;
+}
+
