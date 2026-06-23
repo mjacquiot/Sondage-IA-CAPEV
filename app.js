@@ -355,6 +355,9 @@ function setupEventListeners() {
     safeAddListener('btn-logout', 'click', handleLogout);
     safeAddListener('btn-export-csv', 'click', exportDataToCSV);
     safeAddListener('btn-reset-db', 'click', confirmResetDatabase);
+
+    // Bouton de réinitialisation/recommencer le sondage
+    safeAddListener('btn-restart-survey', 'click', restartSurvey);
 }
 
 // =========================================================================
@@ -498,9 +501,9 @@ function renderWordCloud(questionId) {
             }
         }
 
-        // Calculer une taille proportionnelle (min: 0.95rem, max: 2.2rem)
+        // Calculer une taille proportionnelle (min: 0.95rem, max: 1.35rem)
         let minFontSize = 0.95;
-        let maxFontSize = 2.2;
+        let maxFontSize = 1.35;
         let fontSize = minFontSize;
         if (maxVotes > 0) {
             fontSize = minFontSize + (item.votes / maxVotes) * (maxFontSize - minFontSize);
@@ -723,14 +726,18 @@ async function submitSurvey() {
     }
 
     try {
-        const { error } = await supabaseClient
+        const { data, error } = await supabaseClient
             .from('survey_responses')
-            .insert([surveyData]);
+            .insert([surveyData])
+            .select();
 
         if (error) throw error;
 
         // Enregistrer la complétion du sondage dans le localStorage
         safeSetItem('survey_completed', 'true');
+        if (data && data.length > 0 && data[0].id) {
+            safeSetItem('survey_response_id', data[0].id);
+        }
         
         // Nettoyer les intervalles
         if (refreshInterval) {
@@ -787,9 +794,9 @@ function renderReadOnlyCloud(questionId) {
             bubble.classList.add('voted-highlight');
         }
 
-        // Calculer une taille proportionnelle (min: 0.95rem, max: 2.2rem)
+        // Calculer une taille proportionnelle (min: 0.95rem, max: 1.35rem)
         let minFontSize = 0.95;
-        let maxFontSize = 2.2;
+        let maxFontSize = 1.35;
         let fontSize = minFontSize;
         if (maxVotes > 0) {
             fontSize = minFontSize + (item.votes / maxVotes) * (maxFontSize - minFontSize);
@@ -824,6 +831,80 @@ function renderReadOnlyCloud(questionId) {
 
         container.appendChild(bubble);
     });
+}
+
+// Recommencer le sondage : nettoie les votes locaux, décrémente en DB et supprime la réponse
+async function restartSurvey() {
+    const btn = document.getElementById('btn-restart-survey');
+    const originalText = btn ? btn.innerHTML : "🔄 Recommencer le sondage";
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = "Réinitialisation... ⏳";
+    }
+
+    if (supabaseClient) {
+        try {
+            // 2. Supprimer la réponse précédente
+            const lastResponseId = safeGetItem('survey_response_id');
+            if (lastResponseId) {
+                await supabaseClient
+                    .from('survey_responses')
+                    .delete()
+                    .eq('id', lastResponseId);
+            }
+
+            // 3. Rollback des votes dans word_cloud_inputs
+            const questionIds = ['usages', 'attentes', 'outils'];
+            for (const qid of questionIds) {
+                const { data: words, error } = await supabaseClient
+                    .from('word_cloud_inputs')
+                    .eq('question_id', qid);
+                
+                if (!error && words) {
+                    for (const item of words) {
+                        const storageKey = `voted_${qid}_${item.word.toLowerCase()}`;
+                        if (safeGetItem(storageKey) === 'true') {
+                            await supabaseClient
+                                .from('word_cloud_inputs')
+                                .update({ votes: Math.max(0, item.votes - 1) })
+                                .eq('id', item.id);
+                        }
+                    }
+                }
+            }
+        } catch (e) {
+            console.error("Erreur lors de l'annulation des votes en BDD :", e);
+        }
+    }
+
+    // 4. Nettoyer le localStorage
+    safeRemoveItem('survey_completed');
+    safeRemoveItem('survey_response_id');
+    try {
+        const keysToRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith('voted_')) {
+                keysToRemove.push(key);
+            }
+        }
+        keysToRemove.forEach(key => safeRemoveItem(key));
+    } catch (e) {
+        console.warn("Erreur de nettoyage localStorage :", e);
+    }
+
+    // 5. Réinitialiser l'interface et rediriger
+    if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    }
+    showToast("Le sondage a été réinitialisé.", "success");
+    
+    // Retourner au début du sondage
+    window.location.hash = '#programme';
+    setTimeout(() => {
+        window.location.hash = '#sondage';
+    }, 100);
 }
 
 // Permettre à l'utilisateur de refaire le sondage (Utile pour le formateur ou tests)
