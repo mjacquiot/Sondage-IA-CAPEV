@@ -501,9 +501,9 @@ function renderWordCloud(questionId) {
             }
         }
 
-        // Calculer une taille proportionnelle (min: 0.95rem, max: 1.35rem)
-        let minFontSize = 0.95;
-        let maxFontSize = 1.35;
+        // Calculer une taille proportionnelle (min: 0.85rem, max: 1.15rem)
+        let minFontSize = 0.85;
+        let maxFontSize = 1.15;
         let fontSize = minFontSize;
         if (maxVotes > 0) {
             fontSize = minFontSize + (item.votes / maxVotes) * (maxFontSize - minFontSize);
@@ -794,9 +794,9 @@ function renderReadOnlyCloud(questionId) {
             bubble.classList.add('voted-highlight');
         }
 
-        // Calculer une taille proportionnelle (min: 0.95rem, max: 1.35rem)
-        let minFontSize = 0.95;
-        let maxFontSize = 1.35;
+        // Calculer une taille proportionnelle (min: 0.85rem, max: 1.15rem)
+        let minFontSize = 0.85;
+        let maxFontSize = 1.15;
         let fontSize = minFontSize;
         if (maxVotes > 0) {
             fontSize = minFontSize + (item.votes / maxVotes) * (maxFontSize - minFontSize);

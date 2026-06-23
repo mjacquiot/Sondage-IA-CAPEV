@@ -571,7 +571,7 @@ body {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 0.5em 1rem;
+    padding: 0.4em 0.8rem;
     background: rgba(255, 255, 255, 0.9);
     border: 1px solid var(--border-glass-light);
     border-radius: 50px;
