@@ -726,12 +726,41 @@ async function submitSurvey() {
     btn.disabled = true;
     btn.innerHTML = 'Envoi... <span class="spinner">⏳</span>';
 
+    // Collecter les attentes et outils pour lesquels l'utilisateur a voté
+    const findOriginalWord = (questionId, lowerWord) => {
+        const list = wordCloudsData[questionId] || [];
+        const found = list.find(w => w.word.toLowerCase() === lowerWord);
+        return found ? found.word : lowerWord.charAt(0).toUpperCase() + lowerWord.slice(1);
+    };
+
+    const votedAttentes = [];
+    const votedOutils = [];
+    try {
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && localStorage.getItem(key) === 'true') {
+                if (key.startsWith('voted_attentes_')) {
+                    const lowerWord = key.replace('voted_attentes_', '');
+                    votedAttentes.push(findOriginalWord('attentes', lowerWord));
+                } else if (key.startsWith('voted_outils_')) {
+                    const lowerWord = key.replace('voted_outils_', '');
+                    votedOutils.push(findOriginalWord('outils', lowerWord));
+                }
+            }
+        }
+    } catch (e) {
+        console.warn("Error collecting voted items for submit:", e);
+    }
+
     const responseId = generateUUID();
     const surveyData = {
         id: responseId,
         profile: selectedProfile,
         usage_contexts: selectedContexts,
-        interests: {}
+        interests: {
+            attentes: votedAttentes,
+            outils: votedOutils
+        }
     };
 
     if (!supabaseClient) {
@@ -1340,7 +1369,7 @@ function exportDataToCSV() {
     csvContent += "\uFEFF";
 
     // En-tête
-    csvContent += "Date Soumission;Profil Rôle;Usages recherchés (Contextes d'Usage)\n";
+    csvContent += "Date Soumission;Profil Rôle;Usages recherchés (Contextes d'Usage);Attentes de la formation;Outils IA déjà utilisés\n";
 
     // Lignes
     surveyResponsesList.forEach(r => {
@@ -1348,7 +1377,18 @@ function exportDataToCSV() {
         const profile = r.profile ? `"${r.profile.replace(/"/g, '""')}"` : "";
         const contexts = r.usage_contexts ? `"${r.usage_contexts.join(', ').replace(/"/g, '""')}"` : "";
         
-        csvContent += `${dateStr};${profile};${contexts}\n`;
+        let attentes = "";
+        let outils = "";
+        if (r.interests) {
+            if (Array.isArray(r.interests.attentes)) {
+                attentes = r.interests.attentes.join(', ');
+            }
+            if (Array.isArray(r.interests.outils)) {
+                outils = r.interests.outils.join(', ');
+            }
+        }
+        
+        csvContent += `${dateStr};${profile};${contexts};"${attentes.replace(/"/g, '""')}";"${outils.replace(/"/g, '""')}"\n`;
     });
 
     // Création du lien de téléchargement
