@@ -489,15 +489,26 @@ function renderWordCloud(questionId) {
         let isSelected = false;
         const storageKey = `voted_${questionId}_${item.word.toLowerCase()}`;
         
-        if (questionId === 'usages') {
-            isSelected = selectedContexts.includes(item.word);
-            if (isSelected) {
-                bubble.classList.add('selected-interactive');
+        if (Number(item.votes) <= 0) {
+            // Nettoyage automatique des clés de vote obsolètes suite à un RESET
+            safeRemoveItem(storageKey);
+            if (questionId === 'usages') {
+                const idx = selectedContexts.indexOf(item.word);
+                if (idx > -1) {
+                    selectedContexts.splice(idx, 1);
+                }
             }
         } else {
-            isSelected = safeGetItem(storageKey) === 'true';
-            if (isSelected) {
-                bubble.classList.add('voted');
+            if (questionId === 'usages') {
+                isSelected = selectedContexts.includes(item.word);
+                if (isSelected) {
+                    bubble.classList.add('selected-interactive');
+                }
+            } else {
+                isSelected = safeGetItem(storageKey) === 'true';
+                if (isSelected) {
+                    bubble.classList.add('voted');
+                }
             }
         }
 
@@ -788,9 +799,16 @@ function renderReadOnlyCloud(questionId) {
         bubble.className = 'word-bubble read-only';
         
         const storageKey = `voted_${questionId}_${item.word.toLowerCase()}`;
-        const hasVoted = safeGetItem(storageKey) === 'true';
-        if (hasVoted) {
-            bubble.classList.add('voted-highlight');
+        let hasVoted = false;
+        
+        if (Number(item.votes) <= 0) {
+            // Nettoyage automatique des clés de vote obsolètes suite à un RESET
+            safeRemoveItem(storageKey);
+        } else {
+            hasVoted = safeGetItem(storageKey) === 'true';
+            if (hasVoted) {
+                bubble.classList.add('voted-highlight');
+            }
         }
 
         // Calculer une taille proportionnelle (min: 0.85rem, max: 1.15rem)
@@ -1287,6 +1305,9 @@ async function confirmResetDatabase() {
 
         if (error1 || error2) throw new Error("Erreur lors de la purge.");
 
+        // Ré-ensemencer les propositions initiales avec 0 vote
+        await seedDefaultWords(true);
+
         showToast("Base de données entièrement réinitialisée !", "success");
         
         // Recharger le tableau de bord
@@ -1440,16 +1461,20 @@ function sanitizeAndCleanWord(word) {
 }
 
 // Auto-seeding des mots par défaut si vides dans la DB (0 vote par défaut)
-async function seedDefaultWords() {
+async function seedDefaultWords(force = false) {
     if (!supabaseClient) return;
     try {
         // 1. Seed usages
-        const { data: usagesData, error: usagesError } = await supabaseClient
-            .from('word_cloud_inputs')
-            .select('id')
-            .eq('question_id', 'usages')
-            .limit(1);
-        if (!usagesError && (!usagesData || usagesData.length === 0)) {
+        let shouldSeedUsages = force;
+        if (!shouldSeedUsages) {
+            const { data: usagesData, error: usagesError } = await supabaseClient
+                .from('word_cloud_inputs')
+                .select('id')
+                .eq('question_id', 'usages')
+                .limit(1);
+            shouldSeedUsages = !usagesError && (!usagesData || usagesData.length === 0);
+        }
+        if (shouldSeedUsages) {
             const defaultUsages = [
                 "Rédaction de courriers & rapports",
                 "Synthèse de documents & notes",
@@ -1467,12 +1492,16 @@ async function seedDefaultWords() {
         }
 
         // 2. Seed attentes
-        const { data: attentesData, error: attentesError } = await supabaseClient
-            .from('word_cloud_inputs')
-            .select('id')
-            .eq('question_id', 'attentes')
-            .limit(1);
-        if (!attentesError && (!attentesData || attentesData.length === 0)) {
+        let shouldSeedAttentes = force;
+        if (!shouldSeedAttentes) {
+            const { data: attentesData, error: attentesError } = await supabaseClient
+                .from('word_cloud_inputs')
+                .select('id')
+                .eq('question_id', 'attentes')
+                .limit(1);
+            shouldSeedAttentes = !attentesError && (!attentesData || attentesData.length === 0);
+        }
+        if (shouldSeedAttentes) {
             const defaultAttentes = [
                 "Pratique & cas concrets",
                 "Gagner du temps",
@@ -1489,12 +1518,16 @@ async function seedDefaultWords() {
         }
 
         // 3. Seed outils
-        const { data: outilsData, error: outilsError } = await supabaseClient
-            .from('word_cloud_inputs')
-            .select('id')
-            .eq('question_id', 'outils')
-            .limit(1);
-        if (!outilsError && (!outilsData || outilsData.length === 0)) {
+        let shouldSeedOutils = force;
+        if (!shouldSeedOutils) {
+            const { data: outilsData, error: outilsError } = await supabaseClient
+                .from('word_cloud_inputs')
+                .select('id')
+                .eq('question_id', 'outils')
+                .limit(1);
+            shouldSeedOutils = !outilsError && (!outilsData || outilsData.length === 0);
+        }
+        if (shouldSeedOutils) {
             const defaultOutils = [
                 "ChatGPT",
                 "Copilot",
