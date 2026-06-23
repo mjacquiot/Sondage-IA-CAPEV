@@ -514,7 +514,7 @@ function renderWordCloud(questionId) {
         const weight = maxVotes > 0 ? (item.votes / maxVotes) : 0;
 
         // Appliquer des couleurs en fonction de la taille/votes
-        if (item.votes === 0) {
+        if (Number(item.votes) <= 0) {
             bubble.style.borderColor = 'var(--border-glass-light)';
             bubble.style.color = 'var(--text-muted-dark)';
             bubble.style.background = 'rgba(255, 255, 255, 0.4)';
@@ -711,7 +711,9 @@ async function submitSurvey() {
     btn.disabled = true;
     btn.innerHTML = 'Envoi... <span class="spinner">⏳</span>';
 
+    const responseId = generateUUID();
     const surveyData = {
+        id: responseId,
         profile: selectedProfile,
         usage_contexts: selectedContexts,
         interests: {}
@@ -726,18 +728,15 @@ async function submitSurvey() {
     }
 
     try {
-        const { data, error } = await supabaseClient
+        const { error } = await supabaseClient
             .from('survey_responses')
-            .insert([surveyData])
-            .select();
+            .insert([surveyData]);
 
         if (error) throw error;
 
         // Enregistrer la complétion du sondage dans le localStorage
         safeSetItem('survey_completed', 'true');
-        if (data && data.length > 0 && data[0].id) {
-            safeSetItem('survey_response_id', data[0].id);
-        }
+        safeSetItem('survey_response_id', responseId);
         
         // Nettoyer les intervalles
         if (refreshInterval) {
@@ -807,7 +806,7 @@ function renderReadOnlyCloud(questionId) {
 
         // Ne pas surcharger le style si déjà surligné en voted-highlight
         if (!hasVoted) {
-            if (item.votes === 0) {
+            if (Number(item.votes) <= 0) {
                 bubble.style.borderColor = 'var(--border-glass-light)';
                 bubble.style.color = 'var(--text-muted-dark)';
                 bubble.style.background = 'rgba(255, 255, 255, 0.4)';
@@ -1380,6 +1379,17 @@ function escapeHTML(str) {
         .replace(/'/g, '&#039;');
 }
 
+// Générateur d'UUID compatible
+function generateUUID() {
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+        return crypto.randomUUID();
+    }
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+}
+
 // Nettoyage et normalisation des mots saisis dans le nuage
 function sanitizeAndCleanWord(word) {
     if (!word) return null;
@@ -1403,15 +1413,6 @@ function sanitizeAndCleanWord(word) {
 
     // Retirer la ponctuation simple en début/fin de mot
     w = w.replace(/^[^a-zA-Z0-9À-ÿ]+|[^a-zA-Z0-9À-ÿ]+$/g, '');
-
-    // Règle de pluralisation basique en français (enlever le 's' final)
-    if (w.length > 3 && w.endsWith('s')) {
-        // Liste d'exceptions à conserver avec leur 's' (mots courants en IA ou bureautique)
-        const exceptions = ['focus', 'process', 'cours', 'ia', 'axis', 'temps', 'progrès', 'accès'];
-        if (!exceptions.includes(w)) {
-            w = w.slice(0, -1);
-        }
-    }
 
     if (!w) return null;
 
