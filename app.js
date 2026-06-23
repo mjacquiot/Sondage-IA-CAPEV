@@ -693,9 +693,6 @@ async function submitNewWord(questionId, inputId) {
         console.error("Error inserting word:", e);
         showToast("Erreur lors de l'ajout du mot.", "error");
     }
-}.error("Error voting:", e);
-        showToast("Erreur lors de l'enregistrement du vote.", "error");
-    }
 }
 
 // =========================================================================
