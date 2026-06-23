@@ -544,8 +544,12 @@ function renderWordCloud(questionId) {
             bubble.style.boxShadow = '0 4px 10px rgba(147, 51, 234, 0.08)';
         }
 
-        // Structure HTML sans vote-count
-        bubble.innerHTML = `<span class="word-text">${escapeHTML(item.word)}</span>`;
+        // Structure HTML avec coche ✓ si sélectionné/voté
+        if (isSelected) {
+            bubble.innerHTML = `<span class="word-text">✓ ${escapeHTML(item.word)}</span>`;
+        } else {
+            bubble.innerHTML = `<span class="word-text">${escapeHTML(item.word)}</span>`;
+        }
 
         // Événement clic
         bubble.addEventListener('click', () => handleWordClick(questionId, item));
@@ -844,7 +848,12 @@ function renderReadOnlyCloud(questionId) {
             }
         }
 
-        bubble.innerHTML = `<span class="word-text">${escapeHTML(item.word)}</span>`;
+        // Structure HTML avec coche ✓ si sélectionné/voté
+        if (hasVoted) {
+            bubble.innerHTML = `<span class="word-text">✓ ${escapeHTML(item.word)}</span>`;
+        } else {
+            bubble.innerHTML = `<span class="word-text">${escapeHTML(item.word)}</span>`;
+        }
 
         container.appendChild(bubble);
     });
