@@ -140,7 +140,7 @@ function initApp() {
         // Initialisation du client Supabase
         supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
         initRealtime();
-        seedDefaultUsages();
+        seedDefaultWords();
     } catch (e) {
         showToast("Erreur d'initialisation de Supabase. Vérifiez votre connexion.", "error");
         reportError("Supabase init", e);
@@ -464,7 +464,6 @@ async function loadWordCloud(questionId, isSilent = false) {
     }
 }
 
-// Rendu HTML du nuage de mots
 function renderWordCloud(questionId) {
     const container = document.getElementById(`cloud-${questionId}`);
     if (!container) return;
@@ -499,26 +498,40 @@ function renderWordCloud(questionId) {
             }
         }
 
-        // Calculer une taille proportionnelle (min: 0.85rem, max: 2.2rem)
-        let fontSize = 0.9;
-        if (maxVotes > 1) {
-            fontSize = 0.9 + (item.votes - 1) / (maxVotes - 1) * 1.3;
+        // Calculer une taille proportionnelle (min: 0.95rem, max: 2.2rem)
+        let minFontSize = 0.95;
+        let maxFontSize = 2.2;
+        let fontSize = minFontSize;
+        if (maxVotes > 0) {
+            fontSize = minFontSize + (item.votes / maxVotes) * (maxFontSize - minFontSize);
         }
         bubble.style.fontSize = `${fontSize}rem`;
 
-        // Style selon la popularité (couleurs plus vives pour les mots populaires)
-        if (item.votes > maxVotes * 0.7) {
+        // Calculer le poids relatif (0 à 1) pour les couleurs
+        const weight = maxVotes > 0 ? (item.votes / maxVotes) : 0;
+
+        // Appliquer des couleurs en fonction de la taille/votes
+        if (item.votes === 0) {
+            bubble.style.borderColor = 'var(--border-glass-light)';
+            bubble.style.color = 'var(--text-muted-dark)';
+            bubble.style.background = 'rgba(255, 255, 255, 0.4)';
+        } else if (weight <= 0.33) {
+            bubble.style.borderColor = 'rgba(99, 102, 241, 0.3)';
+            bubble.style.color = 'var(--color-primary-light)';
+            bubble.style.background = 'rgba(99, 102, 241, 0.02)';
+        } else if (weight <= 0.66) {
             bubble.style.borderColor = 'var(--color-accent)';
-            bubble.style.background = 'rgba(6, 182, 212, 0.08)';
-        } else if (item.votes > maxVotes * 0.4) {
-            bubble.style.borderColor = 'var(--color-primary-light)';
+            bubble.style.color = 'var(--color-accent)';
+            bubble.style.background = 'rgba(6, 182, 212, 0.04)';
+        } else {
+            bubble.style.borderColor = 'var(--color-purple)';
+            bubble.style.color = 'var(--color-purple)';
+            bubble.style.background = 'rgba(147, 51, 234, 0.04)';
+            bubble.style.boxShadow = '0 4px 10px rgba(147, 51, 234, 0.08)';
         }
 
-        // Structure HTML
-        bubble.innerHTML = `
-            <span class="word-text">${escapeHTML(item.word)}</span>
-            <span class="word-count">${item.votes}</span>
-        `;
+        // Structure HTML sans vote-count
+        bubble.innerHTML = `<span class="word-text">${escapeHTML(item.word)}</span>`;
 
         // Événement clic
         bubble.addEventListener('click', () => handleWordClick(questionId, item));
@@ -527,21 +540,36 @@ function renderWordCloud(questionId) {
     });
 }
 
-// Gère le clic sur un mot du nuage
+// Gère le clic sur un mot du nuage (Vote et Dévote)
 async function handleWordClick(questionId, item) {
+    const wordLower = item.word.toLowerCase();
+    const storageKey = `voted_${questionId}_${wordLower}`;
+    
     if (questionId === 'usages') {
-        const wordLower = item.word.toLowerCase();
         const index = selectedContexts.indexOf(item.word);
         if (index > -1) {
-            // Désélectionner
+            // Déselectionner
             selectedContexts.splice(index, 1);
-            renderWordCloud('usages');
+            
+            // Dévoter si voté sur cet appareil
+            if (safeGetItem(storageKey) === 'true') {
+                safeRemoveItem(storageKey);
+                try {
+                    await supabaseClient
+                        .from('word_cloud_inputs')
+                        .update({ votes: Math.max(0, item.votes - 1) })
+                        .eq('question_id', 'usages')
+                        .eq('word', item.word);
+                } catch (e) {
+                    console.error("Error devoting usage:", e);
+                }
+            }
+            await loadWordCloud('usages');
         } else {
             // Sélectionner
             selectedContexts.push(item.word);
             
             // Voter si pas déjà voté sur cet appareil
-            const storageKey = `voted_usages_${wordLower}`;
             if (safeGetItem(storageKey) !== 'true') {
                 safeSetItem(storageKey, 'true');
                 try {
@@ -550,29 +578,64 @@ async function handleWordClick(questionId, item) {
                         .update({ votes: item.votes + 1 })
                         .eq('question_id', 'usages')
                         .eq('word', item.word);
-                    // Recharger pour mettre à jour les tailles et les votes
-                    await loadWordCloud('usages');
                 } catch (e) {
                     console.error("Error voting for usage:", e);
                 }
-            } else {
-                renderWordCloud('usages');
             }
+            await loadWordCloud('usages');
         }
     } else {
-        // Pour les autres nuages, c'est un vote unique
-        const storageKey = `voted_${questionId}_${item.word.toLowerCase()}`;
-        if (safeGetItem(storageKey) === 'true') return;
-        
-        await voteForWord(questionId, item.word, item.votes);
+        // Pour les autres nuages (attentes, outils)
+        if (safeGetItem(storageKey) === 'true') {
+            // Déjà voté, on dévote
+            safeRemoveItem(storageKey);
+            try {
+                await supabaseClient
+                    .from('word_cloud_inputs')
+                    .update({ votes: Math.max(0, item.votes - 1) })
+                    .eq('question_id', questionId)
+                    .eq('word', item.word);
+                showToast("Vote retiré.", "info");
+            } catch (e) {
+                console.error("Error devoting:", e);
+            }
+            await loadWordCloud(questionId);
+        } else {
+            // Pas encore voté, on vote
+            safeSetItem(storageKey, 'true');
+            try {
+                await supabaseClient
+                    .from('word_cloud_inputs')
+                    .update({ votes: item.votes + 1 })
+                    .eq('question_id', questionId)
+                    .eq('word', item.word);
+                showToast("Vote enregistré !", "success");
+            } catch (e) {
+                console.error("Error voting:", e);
+            }
+            await loadWordCloud(questionId);
+        }
     }
 }
-
 
 // Soumission d'un nouveau mot
 async function submitNewWord(questionId, inputId) {
     const input = document.getElementById(inputId);
     const rawInput = input.value;
+    
+    if (!rawInput.trim()) {
+        showToast("Mot vide ou de liaison ignoré.", "info");
+        input.value = '';
+        return;
+    }
+    
+    // Limitation à 8 mots
+    const wordsArray = rawInput.trim().split(/\s+/);
+    if (wordsArray.length > 8) {
+        showToast("Le texte ne doit pas dépasser 8 mots.", "warning");
+        return;
+    }
+
     const word = sanitizeAndCleanWord(rawInput);
     
     if (!word) {
@@ -581,8 +644,8 @@ async function submitNewWord(questionId, inputId) {
         return;
     }
 
-    if (word.length > 25) {
-        showToast("Le mot ou l'expression est trop long (max 25 car.)", "info");
+    if (word.length > 80) {
+        showToast("Le mot ou l'expression est trop long (max 80 car.)", "info");
         return;
     }
 
@@ -592,22 +655,23 @@ async function submitNewWord(questionId, inputId) {
     const existing = wordCloudsData[questionId].find(w => w.word.toLowerCase() === wordLower);
     
     if (existing) {
-        // Si existe déjà, on vote automatiquement pour
+        // Si existe déjà, on vote si pas déjà voté
         const storageKey = `voted_${questionId}_${existing.word.toLowerCase()}`;
         if (safeGetItem(storageKey) === 'true') {
             showToast(`Vous avez déjà voté pour "${existing.word}"`, "info");
         } else {
-            voteForWord(questionId, existing.word, existing.votes);
+            await handleWordClick(questionId, existing);
         }
         if (questionId === 'usages' && !selectedContexts.includes(existing.word)) {
             selectedContexts.push(existing.word);
+            renderWordCloud('usages');
         }
         input.value = '';
         return;
     }
 
     try {
-        // Insérer dans la base de données
+        // Insérer dans la base de données (démarre à 1 vote pour l'utilisateur qui le soumet)
         const { error } = await supabaseClient
             .from('word_cloud_inputs')
             .insert([{ question_id: questionId, word: word, votes: 1 }]);
@@ -629,35 +693,7 @@ async function submitNewWord(questionId, inputId) {
         console.error("Error inserting word:", e);
         showToast("Erreur lors de l'ajout du mot.", "error");
     }
-}
-
-// Voter pour un mot existant
-async function voteForWord(questionId, word, currentVotes) {
-    const wordLower = word.toLowerCase();
-    const storageKey = `voted_${questionId}_${wordLower}`;
-    
-    if (safeGetItem(storageKey) === 'true') return;
-
-    try {
-        const { error } = await supabaseClient
-            .from('word_cloud_inputs')
-            .update({ votes: currentVotes + 1 })
-            .eq('question_id', questionId)
-            .eq('word', word);
-
-        if (error) throw error;
-
-        // Enregistrer le vote localement
-        safeSetItem(storageKey, 'true');
-        if (questionId === 'usages' && !selectedContexts.includes(word)) {
-            selectedContexts.push(word);
-        }
-        showToast("Vote enregistré !", "success");
-
-        // Recharger immédiatement le nuage
-        await loadWordCloud(questionId);
-    } catch (e) {
-        console.error("Error voting:", e);
+}.error("Error voting:", e);
         showToast("Erreur lors de l'enregistrement du vote.", "error");
     }
 }
@@ -746,23 +782,48 @@ function renderReadOnlyCloud(questionId) {
 
     words.forEach(item => {
         const bubble = document.createElement('div');
-        bubble.className = 'word-bubble voted'; // class voted pour masquer l'interactivité
+        bubble.className = 'word-bubble read-only';
         
-        let fontSize = 0.9;
-        if (maxVotes > 1) {
-            fontSize = 0.9 + (item.votes - 1) / (maxVotes - 1) * 1.3;
+        const storageKey = `voted_${questionId}_${item.word.toLowerCase()}`;
+        const hasVoted = safeGetItem(storageKey) === 'true';
+        if (hasVoted) {
+            bubble.classList.add('voted-highlight');
+        }
+
+        // Calculer une taille proportionnelle (min: 0.95rem, max: 2.2rem)
+        let minFontSize = 0.95;
+        let maxFontSize = 2.2;
+        let fontSize = minFontSize;
+        if (maxVotes > 0) {
+            fontSize = minFontSize + (item.votes / maxVotes) * (maxFontSize - minFontSize);
         }
         bubble.style.fontSize = `${fontSize}rem`;
 
-        if (item.votes > maxVotes * 0.7) {
-            bubble.style.borderColor = 'var(--color-accent)';
-            bubble.style.background = 'rgba(6, 182, 212, 0.08)';
+        const weight = maxVotes > 0 ? (item.votes / maxVotes) : 0;
+
+        // Ne pas surcharger le style si déjà surligné en voted-highlight
+        if (!hasVoted) {
+            if (item.votes === 0) {
+                bubble.style.borderColor = 'var(--border-glass-light)';
+                bubble.style.color = 'var(--text-muted-dark)';
+                bubble.style.background = 'rgba(255, 255, 255, 0.4)';
+            } else if (weight <= 0.33) {
+                bubble.style.borderColor = 'rgba(99, 102, 241, 0.3)';
+                bubble.style.color = 'var(--color-primary-light)';
+                bubble.style.background = 'rgba(99, 102, 241, 0.02)';
+            } else if (weight <= 0.66) {
+                bubble.style.borderColor = 'var(--color-accent)';
+                bubble.style.color = 'var(--color-accent)';
+                bubble.style.background = 'rgba(6, 182, 212, 0.04)';
+            } else {
+                bubble.style.borderColor = 'var(--color-purple)';
+                bubble.style.color = 'var(--color-purple)';
+                bubble.style.background = 'rgba(147, 51, 234, 0.04)';
+                bubble.style.boxShadow = '0 4px 10px rgba(147, 51, 234, 0.08)';
+            }
         }
 
-        bubble.innerHTML = `
-            <span class="word-text">${escapeHTML(item.word)}</span>
-            <span class="word-count">${item.votes}</span>
-        `;
+        bubble.innerHTML = `<span class="word-text">${escapeHTML(item.word)}</span>`;
 
         container.appendChild(bubble);
     });
@@ -1299,19 +1360,17 @@ function sanitizeAndCleanWord(word) {
     return w.charAt(0).toUpperCase() + w.slice(1);
 }
 
-// Auto-seeding des usages par défaut si vide dans la DB
-async function seedDefaultUsages() {
+// Auto-seeding des mots par défaut si vides dans la DB (0 vote par défaut)
+async function seedDefaultWords() {
     if (!supabaseClient) return;
     try {
-        const { data, error } = await supabaseClient
+        // 1. Seed usages
+        const { data: usagesData, error: usagesError } = await supabaseClient
             .from('word_cloud_inputs')
             .select('id')
             .eq('question_id', 'usages')
             .limit(1);
-        
-        if (error) throw error;
-        
-        if (!data || data.length === 0) {
+        if (!usagesError && (!usagesData || usagesData.length === 0)) {
             const defaultUsages = [
                 "Rédaction de courriers & rapports",
                 "Synthèse de documents & notes",
@@ -1323,13 +1382,56 @@ async function seedDefaultUsages() {
             ].map(word => ({
                 question_id: 'usages',
                 word: word,
-                votes: 1
+                votes: 0
             }));
-            
             await supabaseClient.from('word_cloud_inputs').insert(defaultUsages);
         }
+
+        // 2. Seed attentes
+        const { data: attentesData, error: attentesError } = await supabaseClient
+            .from('word_cloud_inputs')
+            .select('id')
+            .eq('question_id', 'attentes')
+            .limit(1);
+        if (!attentesError && (!attentesData || attentesData.length === 0)) {
+            const defaultAttentes = [
+                "Pratique & cas concrets",
+                "Gagner du temps",
+                "Comprendre les limites",
+                "Sécurité & RGPD",
+                "Rédiger de bons prompts",
+                "Découvrir de nouveaux outils"
+            ].map(word => ({
+                question_id: 'attentes',
+                word: word,
+                votes: 0
+            }));
+            await supabaseClient.from('word_cloud_inputs').insert(defaultAttentes);
+        }
+
+        // 3. Seed outils
+        const { data: outilsData, error: outilsError } = await supabaseClient
+            .from('word_cloud_inputs')
+            .select('id')
+            .eq('question_id', 'outils')
+            .limit(1);
+        if (!outilsError && (!outilsData || outilsData.length === 0)) {
+            const defaultOutils = [
+                "ChatGPT",
+                "Copilot",
+                "Gemini",
+                "Claude",
+                "Midjourney",
+                "Canva"
+            ].map(word => ({
+                question_id: 'outils',
+                word: word,
+                votes: 0
+            }));
+            await supabaseClient.from('word_cloud_inputs').insert(defaultOutils);
+        }
     } catch (e) {
-        console.warn("Seeding usages ignored (already seeded or connection error):", e);
+        console.warn("Seeding default words ignored (already seeded or connection error):", e);
     }
 }
 

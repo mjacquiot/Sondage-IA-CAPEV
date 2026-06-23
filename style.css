@@ -553,7 +553,7 @@ body {
     flex-wrap: wrap;
     align-content: center;
     justify-content: center;
-    gap: 0.8rem;
+    gap: 1.2rem;
     position: relative;
     overflow: hidden;
 }
@@ -570,8 +570,8 @@ body {
 .word-bubble {
     display: inline-flex;
     align-items: center;
-    gap: 0.4rem;
-    padding: 0.4em 0.8em;
+    justify-content: center;
+    padding: 0.5em 1rem;
     background: rgba(255, 255, 255, 0.9);
     border: 1px solid var(--border-glass-light);
     border-radius: 50px;
@@ -583,55 +583,50 @@ body {
 }
 
 .word-bubble:hover {
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.95);
     border-color: var(--color-primary-light);
-    transform: scale(1.1) rotate(1deg);
+    transform: scale(1.08) translateY(-2px);
+    box-shadow: 0 5px 15px rgba(15, 23, 42, 0.06);
 }
 
-.word-bubble.voted {
-    background: linear-gradient(135deg, rgba(79, 70, 229, 0.2) 0%, rgba(6, 182, 212, 0.2) 100%);
-    border-color: var(--color-accent);
-    cursor: default;
-}
-
-.word-bubble.voted:hover {
-    transform: none;
-}
-
-.word-bubble.selected-interactive {
-    background: linear-gradient(135deg, rgba(79, 70, 229, 0.2) 0%, rgba(6, 182, 212, 0.2) 100%);
-    border-color: var(--color-accent);
+.word-bubble.voted, .word-bubble.selected-interactive {
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%) !important;
+    color: #ffffff !important;
+    border-color: transparent !important;
+    box-shadow: 0 4px 15px rgba(79, 70, 229, 0.25) !important;
     cursor: pointer;
 }
 
-.word-bubble.selected-interactive:hover {
-    transform: scale(1.1) rotate(1deg);
-    border-color: var(--color-primary-light);
+.word-bubble.voted:hover, .word-bubble.selected-interactive:hover {
+    transform: scale(1.08) translateY(-2px);
+    box-shadow: 0 6px 20px rgba(79, 70, 229, 0.35) !important;
 }
 
-.word-bubble.selected-interactive .word-count {
-    background: var(--color-accent);
-    color: var(--color-cnfpt-blue);
+.word-bubble.read-only {
+    cursor: default;
 }
 
+.word-bubble.read-only:hover {
+    transform: none;
+    box-shadow: 0 2px 5px rgba(15, 23, 42, 0.03);
+    border-color: var(--border-glass-light);
+}
+
+.word-bubble.voted-highlight {
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%) !important;
+    color: #ffffff !important;
+    border-color: transparent !important;
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2) !important;
+    cursor: default;
+}
+
+.word-bubble.voted-highlight:hover {
+    transform: none;
+}
 
 .word-text {
     font-family: var(--font-heading);
     font-weight: 500;
-}
-
-.word-count {
-    font-size: 0.7em;
-    background: rgba(15, 23, 42, 0.06);
-    padding: 0.2em 0.5em;
-    border-radius: 20px;
-    font-weight: 700;
-    color: var(--text-light);
-}
-
-.word-bubble.voted .word-count {
-    background: var(--color-accent);
-    color: var(--color-cnfpt-blue);
 }
 
 /* Zone d'ajout de mot */
